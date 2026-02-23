@@ -1,0 +1,38 @@
+{
+  "accountAssociation": {
+    "header": "REPLACE_WITH_SIGNED_HEADER",
+    "payload": "REPLACE_WITH_SIGNED_PAYLOAD",
+    "signature": "REPLACE_WITH_SIGNATURE"
+  },
+  "miniapp": {
+    "version": "1",
+    "name": "Crusties",
+    "iconUrl": "https://crusties.xyz/icon.png",
+    "homeUrl": "https://crusties.xyz",
+    "imageUrl": "https://crusties.xyz/og-image.png",
+    "buttonTitle": "🍕 Get Your Slice",
+    "splashImageUrl": "https://crusties.xyz/logo.png",
+    "splashBackgroundColor": "#e85d04",
+    "description": "Your Farcaster vibe, baked into a one-of-a-kind pizza PFP. Mint your Crustie—it's a slice of you on-chain.",
+    "subtitle": "AI-generated pizza PFPs on Base",
+    "tagline": "That's amore! Your vibe, your Crustie.",
+    "primaryCategory": "collectibles",
+    "tags": ["nft", "pizza", "pfp", "ai", "base", "farcaster", "crusties"],
+    "screenshotUrls": [
+      "https://crusties.xyz/screenshots/mint-flow.png",
+      "https://crusties.xyz/screenshots/gallery.png",
+      "https://crusties.xyz/screenshots/traits.png"
+    ],
+    "heroImageUrl": "https://crusties.xyz/og-image.png",
+    "ogTitle": "Crusties — Your Farcaster Vibe, Baked",
+    "ogDescription": "Mint your one-of-a-kind AI pizza PFP. 3,333 slices. One of them has your name on it.",
+    "ogImageUrl": "https://crusties.xyz/og-image.png",
+    "requiredChains": ["eip155:8453"],
+    "requiredCapabilities": [
+      "actions.signIn",
+      "wallet.getEthereumProvider",
+      "actions.composeCast"
+    ],
+    "webhookUrl": "https://crusties.xyz/api/webhook"
+  }
+}
