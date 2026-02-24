@@ -127,12 +127,12 @@ export function computeTraits(
   // Nose: seeded random
   const nose = pick(NOSES, rand);
 
-  // Background: based on token holdings
-  const pizzaBalance = parseFloat(onChain.pizzaBalance);
+  // Background: based on USDC holdings
+  const usdcBalance = parseFloat(onChain.usdcBalance);
   let background: string;
-  if (pizzaBalance > 10000) {
+  if (usdcBalance > 10000) {
     background = "cosmic_purple";
-  } else if (pizzaBalance > 1000) {
+  } else if (usdcBalance > 1000) {
     background = "cheese_yellow";
   } else if (onChain.hasDeFiActivity) {
     background = "night_blue";
@@ -177,7 +177,7 @@ export function computeTraits(
       rand() * 30 +
         (onChain.txCount > 100 ? 20 : 0) +
         (user.followerCount > 500 ? 20 : 0) +
-        (pizzaBalance > 1000 ? 15 : 0) +
+        (usdcBalance > 1000 ? 15 : 0) +
         (user.castCount > 30 ? 15 : 0)
     )
   );

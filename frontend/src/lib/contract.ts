@@ -1,8 +1,8 @@
 export const CRUSTIES_CONTRACT_ADDRESS =
   (process.env.NEXT_PUBLIC_CONTRACT_ADDRESS as `0x${string}`) || "0x";
 
-export const PIZZA_TOKEN_ADDRESS =
-  "0xa821f2ee19f4f62e404c934d43eb6e5763fbdb07" as const;
+export const USDC_TOKEN_ADDRESS =
+  "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" as const;
 
 export const CRUSTIES_ABI = [
   {

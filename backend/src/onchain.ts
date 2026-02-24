@@ -7,10 +7,10 @@ export interface OnChainData {
   txCount: number;
   hasNFTs: boolean;
   hasDeFiActivity: boolean;
-  pizzaBalance: string;
+  usdcBalance: string;
 }
 
-const PIZZA_TOKEN = "0xa821f2ee19f4f62e404c934d43eb6e5763fbdb07" as const;
+const USDC_TOKEN = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" as const;
 
 // Minimal ERC-20 balanceOf ABI
 const ERC20_ABI = [
@@ -39,23 +39,26 @@ export async function fetchOnChainData(address?: string): Promise<OnChainData> {
       txCount: 0,
       hasNFTs: false,
       hasDeFiActivity: false,
-      pizzaBalance: "0",
+      usdcBalance: "0",
     };
   }
 
   const client = getClient();
   const addr = address as `0x${string}`;
 
-  const [balance, txCount, pizzaBalance] = await Promise.all([
+  const [balance, txCount, usdcRaw] = await Promise.all([
     client.getBalance({ address: addr }),
     client.getTransactionCount({ address: addr }),
     client.readContract({
-      address: PIZZA_TOKEN,
+      address: USDC_TOKEN,
       abi: ERC20_ABI,
       functionName: "balanceOf",
       args: [addr],
     }),
   ]);
+
+  // USDC has 6 decimals, not 18
+  const usdcBalance = (Number(usdcRaw) / 1e6).toString();
 
   return {
     address,
@@ -63,6 +66,6 @@ export async function fetchOnChainData(address?: string): Promise<OnChainData> {
     txCount,
     hasNFTs: txCount > 20,
     hasDeFiActivity: txCount > 50,
-    pizzaBalance: formatEther(pizzaBalance),
+    usdcBalance,
   };
 }

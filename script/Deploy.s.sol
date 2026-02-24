@@ -6,7 +6,7 @@ import {CrustiesNFT} from "../src/CrustiesNFT.sol";
 
 contract DeployScript is Script {
     function run() public {
-        address paymentToken = vm.envAddress("PIZZA_TOKEN_ADDRESS");
+        address paymentToken = vm.envAddress("USDC_TOKEN_ADDRESS");
         address treasury = vm.envAddress("TREASURY_ADDRESS");
         uint256 minEthPrice = vm.envUint("MIN_ETH_PRICE");
         uint256 minTokenPrice = vm.envUint("MIN_TOKEN_PRICE");

@@ -11,16 +11,16 @@ export async function generateMetadata(): Promise<Metadata> {
       "Mint your unique AI-generated pizza PFP based on your Farcaster vibe. 3,333 supply on Base.",
     other: {
       "fc:miniapp": JSON.stringify({
-        version: "next",
-        imageUrl: `${APP_URL}/og.png`,
+        version: "1",
+        imageUrl: `${APP_URL}/og-image.png`,
         button: {
-          title: "Mint Your Crusties",
+          title: "Get Your Slice",
           action: {
             type: "launch_miniapp",
             name: "Crusties",
             url: APP_URL,
-            splashImageUrl: `${APP_URL}/splash.png`,
-            splashBackgroundColor: "#1A1A1A",
+            splashImageUrl: `${APP_URL}/logo.png`,
+            splashBackgroundColor: "#E85D04",
           },
         },
       }),
@@ -35,7 +35,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="min-h-screen bg-pizza-dark">
+      <body className="min-h-screen bg-cream">
         <Providers>{children}</Providers>
       </body>
     </html>

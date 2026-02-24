@@ -27,7 +27,7 @@ function mockOnChain(overrides: Partial<OnChainData> = {}): OnChainData {
     txCount: 30,
     hasNFTs: true,
     hasDeFiActivity: false,
-    pizzaBalance: "500",
+    usdcBalance: "500",
     ...overrides,
   };
 }
@@ -96,10 +96,10 @@ describe("computeTraits", () => {
     expect(traits.vibe).toBe("Lurker");
   });
 
-  it("assigns cosmic_purple background for high PIZZA holders", () => {
+  it("assigns cosmic_purple background for high USDC holders", () => {
     const traits = computeTraits(
       mockUser(),
-      mockOnChain({ pizzaBalance: "50000" })
+      mockOnChain({ usdcBalance: "50000" })
     );
 
     expect(traits.background).toBe("cosmic_purple");

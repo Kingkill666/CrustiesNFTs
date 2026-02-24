@@ -1,101 +1,161 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { sdk } from "@farcaster/miniapp-sdk";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useAccount } from "wagmi";
-import { PizzaPreview } from "@/components/PizzaPreview";
-import { MintButton } from "@/components/MintButton";
 import { useCrusties } from "@/hooks/useCrusties";
 import { useFarcasterContext } from "@/hooks/useFarcasterContext";
 
+import { SplashScreen } from "@/components/SplashScreen";
+import { HomeScreen } from "@/components/HomeScreen";
+import { GeneratingScreen } from "@/components/GeneratingScreen";
+import { PreviewScreen } from "@/components/PreviewScreen";
+import { MintingScreen } from "@/components/MintingScreen";
+import { SuccessScreen } from "@/components/SuccessScreen";
+import { ErrorScreen } from "@/components/ErrorScreen";
+
+type Screen =
+  | "splash"
+  | "home"
+  | "generating"
+  | "preview"
+  | "minting"
+  | "success"
+  | "error";
+
 export default function Home() {
+  const [screen, setScreen] = useState<Screen>("splash");
+  const [txHash, setTxHash] = useState<string>("");
+  const [errorMessage, setErrorMessage] = useState<string>("");
+
   const { address, isConnected } = useAccount();
-  const { fid, isInMiniApp } = useFarcasterContext();
+  const { fid, username, isInMiniApp } = useFarcasterContext();
   const {
     generatedData,
     isGenerating,
     generate,
     remainingMints,
-    remainingSupply,
     totalMinted,
   } = useCrusties();
 
-  // Signal to Farcaster client that the app is ready to display
+  // Signal to Farcaster client that the app is ready
   useEffect(() => {
     sdk.actions.ready();
   }, []);
 
+  // Watch generating state — transition when generation completes
+  useEffect(() => {
+    if (screen === "generating" && generatedData && !isGenerating) {
+      setScreen("preview");
+    }
+  }, [screen, generatedData, isGenerating]);
+
+  const handleSplashComplete = useCallback(() => {
+    setScreen("home");
+  }, []);
+
+  const handleGetSlice = useCallback(() => {
+    setScreen("generating");
+    generate(fid ?? undefined);
+  }, [fid, generate]);
+
+  const handleBackToHome = useCallback(() => {
+    setScreen("home");
+  }, []);
+
+  const handleReroll = useCallback(() => {
+    setScreen("generating");
+    generate(fid ?? undefined);
+  }, [fid, generate]);
+
+  const handleMintStarted = useCallback((hash: string) => {
+    setTxHash(hash);
+    setScreen("minting");
+  }, []);
+
+  const handleMintSuccess = useCallback((hash: string) => {
+    setTxHash(hash);
+    setScreen("success");
+  }, []);
+
+  const handleMintError = useCallback((error: string) => {
+    setErrorMessage(error);
+    setScreen("error");
+  }, []);
+
+  const handleMintAnother = useCallback(() => {
+    setScreen("generating");
+    generate(fid ?? undefined);
+  }, [fid, generate]);
+
+  const handleRetry = useCallback(() => {
+    setScreen("preview");
+  }, []);
+
+  const userMintCount = remainingMints !== undefined ? BigInt(3) - remainingMints : undefined;
+  const remaining = remainingMints ? Number(remainingMints) : 0;
+
   return (
     <main
-      className="flex min-h-screen flex-col items-center px-4 py-8"
       style={
         isInMiniApp
-          ? { paddingTop: `calc(2rem + env(safe-area-inset-top, 0px))` }
+          ? { paddingTop: `env(safe-area-inset-top, 0px)` }
           : undefined
       }
     >
-      {/* Header */}
-      <div className="mb-8 text-center">
-        <h1 className="mb-2 text-5xl font-bold text-pizza-cheese">Crusties</h1>
-        <p className="text-lg text-gray-400">
-          AI-generated pizza PFPs on Base
-        </p>
-        {totalMinted !== undefined && (
-          <p className="mt-2 text-sm text-gray-500">
-            {totalMinted.toString()} / 3,333 minted
-          </p>
-        )}
-      </div>
+      {screen === "splash" && (
+        <SplashScreen onComplete={handleSplashComplete} />
+      )}
 
-      {/* Wallet Connect */}
-      <div className="mb-8">
-        <ConnectButton />
-      </div>
+      {screen === "home" && (
+        <HomeScreen
+          totalMinted={totalMinted as bigint | undefined}
+          userMintCount={userMintCount}
+          isConnected={isConnected}
+          username={username}
+          onGetSlice={handleGetSlice}
+        />
+      )}
 
-      {/* Main Content */}
-      {isConnected && address ? (
-        <div className="flex w-full max-w-md flex-col items-center gap-6">
-          {/* Mint Info */}
-          {remainingMints !== undefined && (
-            <p className="text-sm text-gray-400">
-              You can mint {remainingMints.toString()} more
-              {remainingSupply !== undefined &&
-                ` · ${remainingSupply.toString()} remaining`}
-            </p>
-          )}
+      {screen === "generating" && (
+        <GeneratingScreen onBack={handleBackToHome} />
+      )}
 
-          {/* FID display in Mini App context */}
-          {fid && (
-            <p className="text-xs text-gray-600">
-              Farcaster ID: {fid}
-            </p>
-          )}
+      {screen === "preview" && generatedData && (
+        <PreviewScreen
+          imageUrl={generatedData.imageUrl}
+          ipfsUri={generatedData.ipfsUri}
+          traits={generatedData.traits}
+          onBack={handleBackToHome}
+          onReroll={handleReroll}
+          onMintStarted={handleMintStarted}
+          onMintSuccess={handleMintSuccess}
+          onMintError={handleMintError}
+        />
+      )}
 
-          {/* Generate Button */}
-          {!generatedData && (
-            <button
-              onClick={() => generate(fid ?? undefined)}
-              disabled={isGenerating}
-              className="w-full rounded-xl bg-pizza-red px-8 py-4 text-lg font-bold text-white transition-all hover:scale-105 hover:bg-red-600 disabled:opacity-50 disabled:hover:scale-100"
-            >
-              {isGenerating ? "Baking your pizza..." : "Generate My Crusties"}
-            </button>
-          )}
+      {screen === "minting" && generatedData && (
+        <MintingScreen
+          imageUrl={generatedData.imageUrl}
+          txHash={txHash}
+        />
+      )}
 
-          {/* Pizza Preview */}
-          {generatedData && (
-            <>
-              <PizzaPreview
-                imageUrl={generatedData.imageUrl}
-                traits={generatedData.traits}
-              />
-              <MintButton ipfsUri={generatedData.ipfsUri} />
-            </>
-          )}
-        </div>
-      ) : (
-        <p className="text-gray-500">Connect your wallet to get started</p>
+      {screen === "success" && generatedData && (
+        <SuccessScreen
+          imageUrl={generatedData.imageUrl}
+          txHash={txHash}
+          remainingMints={remaining}
+          onMintAnother={handleMintAnother}
+        />
+      )}
+
+      {screen === "error" && (
+        <ErrorScreen
+          errorMessage={errorMessage}
+          onRetry={handleRetry}
+          onBackHome={handleBackToHome}
+        />
       )}
     </main>
   );

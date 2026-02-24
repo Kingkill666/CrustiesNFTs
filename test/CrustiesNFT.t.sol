@@ -5,19 +5,23 @@ import {Test, console} from "forge-std/Test.sol";
 import {CrustiesNFT} from "../src/CrustiesNFT.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-contract MockPizza is ERC20 {
-    constructor() ERC20("Pizza", "PIZZA") {
-        _mint(msg.sender, 1_000_000 ether);
+contract MockUSDC is ERC20 {
+    constructor() ERC20("USD Coin", "USDC") {
+        _mint(msg.sender, 1_000_000e6); // USDC has 6 decimals
     }
 
     function mint(address to, uint256 amount) external {
         _mint(to, amount);
     }
+
+    function decimals() public pure override returns (uint8) {
+        return 6;
+    }
 }
 
 contract CrustiesNFTTest is Test {
     CrustiesNFT public nft;
-    MockPizza public pizza;
+    MockUSDC public usdc;
 
     address public owner = address(this);
     address public treasury = makeAddr("treasury");
@@ -25,17 +29,17 @@ contract CrustiesNFTTest is Test {
     address public bob = makeAddr("bob");
 
     uint256 public constant MIN_ETH_PRICE = 0.001 ether;
-    uint256 public constant MIN_TOKEN_PRICE = 1000 ether;
+    uint256 public constant MIN_TOKEN_PRICE = 3e6; // $3 USDC (6 decimals)
 
     string public constant TOKEN_URI = "ipfs://QmTestHash123/metadata.json";
     string public constant TOKEN_URI_2 = "ipfs://QmTestHash456/metadata.json";
 
     function setUp() public {
-        pizza = new MockPizza();
-        nft = new CrustiesNFT(address(pizza), treasury, MIN_ETH_PRICE, MIN_TOKEN_PRICE);
+        usdc = new MockUSDC();
+        nft = new CrustiesNFT(address(usdc), treasury, MIN_ETH_PRICE, MIN_TOKEN_PRICE);
 
-        pizza.mint(alice, 10_000 ether);
-        pizza.mint(bob, 10_000 ether);
+        usdc.mint(alice, 10_000e6);
+        usdc.mint(bob, 10_000e6);
 
         vm.deal(alice, 10 ether);
         vm.deal(bob, 10 ether);
@@ -50,7 +54,7 @@ contract CrustiesNFTTest is Test {
         assertEq(nft.maxMintsPerWallet(), 3);
         assertEq(nft.minEthPrice(), MIN_ETH_PRICE);
         assertEq(nft.minTokenPrice(), MIN_TOKEN_PRICE);
-        assertEq(address(nft.paymentToken()), address(pizza));
+        assertEq(address(nft.paymentToken()), address(usdc));
         assertEq(nft.treasury(), treasury);
         assertEq(nft.totalMinted(), 0);
         assertEq(nft.owner(), owner);
@@ -109,11 +113,11 @@ contract CrustiesNFTTest is Test {
         vm.stopPrank();
     }
 
-    // ==================== mintWithToken ====================
+    // ==================== mintWithToken (USDC) ====================
 
     function test_MintWithToken() public {
         vm.startPrank(alice);
-        pizza.approve(address(nft), MIN_TOKEN_PRICE);
+        usdc.approve(address(nft), MIN_TOKEN_PRICE);
         uint256 tokenId = nft.mintWithToken(TOKEN_URI, MIN_TOKEN_PRICE);
         vm.stopPrank();
 
@@ -122,12 +126,12 @@ contract CrustiesNFTTest is Test {
         assertEq(nft.tokenURI(1), TOKEN_URI);
         assertEq(nft.totalMinted(), 1);
         assertEq(nft.mintCount(alice), 1);
-        assertEq(pizza.balanceOf(treasury), MIN_TOKEN_PRICE);
+        assertEq(usdc.balanceOf(treasury), MIN_TOKEN_PRICE);
     }
 
     function test_MintWithToken_EmitsMinted() public {
         vm.startPrank(alice);
-        pizza.approve(address(nft), MIN_TOKEN_PRICE);
+        usdc.approve(address(nft), MIN_TOKEN_PRICE);
 
         vm.expectEmit(true, true, false, true);
         emit CrustiesNFT.Minted(alice, 1, "token");
@@ -138,7 +142,7 @@ contract CrustiesNFTTest is Test {
 
     function test_MintWithToken_RevertsBelowMinPrice() public {
         vm.startPrank(alice);
-        pizza.approve(address(nft), MIN_TOKEN_PRICE);
+        usdc.approve(address(nft), MIN_TOKEN_PRICE);
 
         vm.expectRevert("Below min token price");
         nft.mintWithToken(TOKEN_URI, MIN_TOKEN_PRICE - 1);
@@ -153,7 +157,7 @@ contract CrustiesNFTTest is Test {
 
     function test_MintWithToken_RevertsAtWalletCap() public {
         vm.startPrank(alice);
-        pizza.approve(address(nft), MIN_TOKEN_PRICE * 4);
+        usdc.approve(address(nft), MIN_TOKEN_PRICE * 4);
 
         nft.mintWithToken("ipfs://1", MIN_TOKEN_PRICE);
         nft.mintWithToken("ipfs://2", MIN_TOKEN_PRICE);
@@ -167,10 +171,8 @@ contract CrustiesNFTTest is Test {
     // ==================== Supply Cap ====================
 
     function test_MintRevertsAtMaxSupply() public {
-        // Set max supply to 2 for quick testing
         nft.setMaxMintsPerWallet(10000);
 
-        // Mint up to max supply
         for (uint256 i = 0; i < 3333; i++) {
             address minter = makeAddr(string(abi.encodePacked("minter", i)));
             vm.deal(minter, 1 ether);
@@ -247,7 +249,7 @@ contract CrustiesNFTTest is Test {
     }
 
     function test_SetMinTokenPrice() public {
-        uint256 newPrice = 2000 ether;
+        uint256 newPrice = 5e6; // $5 USDC
         nft.setMinTokenPrice(newPrice);
         assertEq(nft.minTokenPrice(), newPrice);
     }
@@ -255,7 +257,7 @@ contract CrustiesNFTTest is Test {
     function test_SetMinTokenPrice_RevertsNonOwner() public {
         vm.prank(alice);
         vm.expectRevert();
-        nft.setMinTokenPrice(2000 ether);
+        nft.setMinTokenPrice(5e6);
     }
 
     function test_SetMaxMintsPerWallet() public {
@@ -317,9 +319,9 @@ contract CrustiesNFTTest is Test {
         vm.prank(alice);
         uint256 tokenId1 = nft.mintWithETH{value: MIN_ETH_PRICE}(TOKEN_URI);
 
-        // Bob mints with PIZZA token
+        // Bob mints with USDC
         vm.startPrank(bob);
-        pizza.approve(address(nft), MIN_TOKEN_PRICE);
+        usdc.approve(address(nft), MIN_TOKEN_PRICE);
         uint256 tokenId2 = nft.mintWithToken(TOKEN_URI_2, MIN_TOKEN_PRICE);
         vm.stopPrank();
 
@@ -331,6 +333,6 @@ contract CrustiesNFTTest is Test {
         assertEq(nft.tokenURI(2), TOKEN_URI_2);
         assertEq(nft.totalMinted(), 2);
         assertEq(treasury.balance, MIN_ETH_PRICE);
-        assertEq(pizza.balanceOf(treasury), MIN_TOKEN_PRICE);
+        assertEq(usdc.balanceOf(treasury), MIN_TOKEN_PRICE);
     }
 }

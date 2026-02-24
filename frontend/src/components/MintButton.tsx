@@ -5,13 +5,12 @@ import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagm
 import {
   CRUSTIES_CONTRACT_ADDRESS,
   CRUSTIES_ABI,
-  PIZZA_TOKEN_ADDRESS,
+  USDC_TOKEN_ADDRESS,
   ERC20_ABI,
 } from "@/lib/contract";
 import { useCrusties } from "@/hooks/useCrusties";
-import { parseEther } from "viem";
 
-type PaymentMethod = "eth" | "pizza";
+type PaymentMethod = "eth" | "usdc";
 
 interface MintButtonProps {
   ipfsUri: string;
@@ -57,17 +56,17 @@ export function MintButton({ ipfsUri }: MintButtonProps) {
   const handleApproveAndMint = async () => {
     if (!minTokenPrice) return;
 
-    // Step 1: Approve $PIZZA spend
+    // Step 1: Approve USDC spend
     writeApprove(
       {
-        address: PIZZA_TOKEN_ADDRESS,
+        address: USDC_TOKEN_ADDRESS,
         abi: ERC20_ABI,
         functionName: "approve",
         args: [CRUSTIES_CONTRACT_ADDRESS, minTokenPrice],
       },
       {
         onSuccess: () => {
-          // Step 2: Mint with token after approval
+          // Step 2: Mint with USDC after approval
           writeContract({
             address: CRUSTIES_CONTRACT_ADDRESS,
             abi: CRUSTIES_ABI,
@@ -120,14 +119,14 @@ export function MintButton({ ipfsUri }: MintButtonProps) {
           Pay with ETH
         </button>
         <button
-          onClick={() => setPaymentMethod("pizza")}
+          onClick={() => setPaymentMethod("usdc")}
           className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-            paymentMethod === "pizza"
+            paymentMethod === "usdc"
               ? "bg-pizza-red text-white"
               : "text-gray-400 hover:text-white"
           }`}
         >
-          Pay with $PIZZA
+          Pay with USDC
         </button>
       </div>
 
@@ -140,9 +139,9 @@ export function MintButton({ ipfsUri }: MintButtonProps) {
               )} ETH`
             : "Loading price..."
           : minTokenPrice
-            ? `Price: ${parseFloat(
-                (Number(minTokenPrice) / 1e18).toFixed(2)
-              )} $PIZZA`
+            ? `Price: $${parseFloat(
+                (Number(minTokenPrice) / 1e6).toFixed(2)
+              )} USDC`
             : "Loading price..."}
       </p>
 
@@ -154,11 +153,11 @@ export function MintButton({ ipfsUri }: MintButtonProps) {
       >
         {isLoading
           ? isApproving || isApprovingTx
-            ? "Approving $PIZZA..."
+            ? "Approving USDC..."
             : isConfirming
               ? "Confirming..."
               : "Minting..."
-          : `Mint with ${paymentMethod === "eth" ? "ETH" : "$PIZZA"}`}
+          : `Mint with ${paymentMethod === "eth" ? "ETH" : "USDC"}`}
       </button>
 
       {/* Error display */}

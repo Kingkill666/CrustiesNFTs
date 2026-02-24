@@ -15,7 +15,7 @@
 
 ## Project Summary
 
-**Crusties** is an AI-generated pizza NFT (PFP) collection on **Base**. Users connect via Farcaster, our backend analyzes their on-chain + social identity, generates a unique pizza avatar, pins it to IPFS, and the user mints it on-chain. Supply is capped at 3,333. Payment accepted in Base ETH or $PIZZA token.
+**Crusties** is an AI-generated pizza NFT (PFP) collection on **Base**. Users connect via Farcaster, our backend analyzes their on-chain + social identity, generates a unique pizza avatar, pins it to IPFS, and the user mints it on-chain. Supply is capped at 3,333. Payment accepted in Base ETH or USDC.
 
 ---
 
@@ -23,12 +23,14 @@
 
 ```
 Network:              Base Mainnet (Chain ID 8453)
-$PIZZA Token:         0xa821f2ee19f4f62e404c934d43eb6e5763fbdb07
+USDC Token:           0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913 (6 decimals)
 Max Supply:           3,333
 Max Mints Per Wallet: 3
 Royalty:              2.5% (250 basis points, ERC-2981)
 Token Name:           Crusties
 Token Symbol:         CRUSTIES
+ETH Mint Price:       0.001 ETH (1000000000000000 wei)
+USDC Mint Price:      $3 USDC (3000000, 6 decimals)
 ```
 
 ---
@@ -51,9 +53,9 @@ The smart contract pattern is taken directly from PizzaFriends on Base:
 
 ### What we change:
 - Token name: "PizzaFriends" → "Crusties", symbol: "PIZZAFRIENDS" → "CRUSTIES"
-- Payment token: PizzaFriends' token → $PIZZA (`0xa821f2ee19f4f62e404c934d43eb6e5763fbdb07`)
+- Payment token: PizzaFriends' token → USDC (`0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913`, 6 decimals)
 - All metadata, traits, and imagery are pizza-themed
-- Constructor parameters will use $PIZZA address and our treasury
+- Constructor parameters will use USDC address and our treasury
 
 ---
 
@@ -170,7 +172,7 @@ When writing or modifying the CrustiesNFT contract:
 2. **OpenZeppelin v5.x** — Use `@openzeppelin/contracts` v5. The constructor pattern is `Ownable(msg.sender)`, not the v4 pattern.
 3. **Compiler:** Solidity `^0.8.24` (required by OZ v5.5), compiled with solc 0.8.31, optimizer 200 runs.
 4. **Token URI is passed at mint time** — The contract does NOT generate metadata. The backend generates the image, pins to IPFS, constructs the metadata JSON, pins that to IPFS, and passes the IPFS URI as `_tokenURI` to the mint function.
-5. **Dual payment:** `mintWithETH` accepts ETH (forwarded to treasury via low-level call), `mintWithToken` accepts $PIZZA (transferred via `transferFrom` — user must `approve` first).
+5. **Dual payment:** `mintWithETH` accepts ETH (forwarded to treasury via low-level call), `mintWithToken` accepts USDC (transferred via `transferFrom` — user must `approve` first). USDC has 6 decimals.
 6. **No whitelist/allowlist** — Anyone can mint, up to `maxMintsPerWallet` limit.
 7. **Royalties:** 2.5% default via ERC-2981. Receiver is the treasury.
 
@@ -405,8 +407,8 @@ When building the frontend:
 4. **Mint Flow:**
    - User connects wallet + Farcaster identity
    - Frontend calls backend to generate pizza → shows preview
-   - User selects payment method (ETH or $PIZZA)
-   - If $PIZZA: call `approve()` on $PIZZA contract first, then `mintWithToken()`
+   - User selects payment method (ETH or USDC)
+   - If USDC: call `approve()` on USDC contract first, then `mintWithToken()`
    - If ETH: call `mintWithETH()` with value
    - Show success state with NFT image + link to BaseScan tx
 5. **Contract Interaction:** Use Wagmi `useWriteContract` / `useReadContract` hooks. Keep the ABI in `lib/contract.ts`.
@@ -446,7 +448,7 @@ Contracts:     PascalCase.sol          (CrustiesNFT.sol)
 TypeScript:    camelCase.ts            (personality.ts, ipfsPin.ts)
 Components:    PascalCase.tsx          (MintButton.tsx, PizzaPreview.tsx)
 Hooks:         useCamelCase.ts         (useCrusties.ts)
-Constants:     SCREAMING_SNAKE_CASE    (MAX_SUPPLY, PIZZA_TOKEN_ADDRESS)
+Constants:     SCREAMING_SNAKE_CASE    (MAX_SUPPLY, USDC_TOKEN_ADDRESS)
 Env vars:      SCREAMING_SNAKE_CASE    (PINATA_API_KEY, BASE_RPC_URL)
 ```
 
@@ -462,7 +464,7 @@ Env vars:      SCREAMING_SNAKE_CASE    (PINATA_API_KEY, BASE_RPC_URL)
 - Test that `tokenURI` returns correctly after mint
 - Test all `onlyOwner` admin functions
 - Test edge cases: minting at supply cap, zero-value payments, unauthorized access
-- Use a mock ERC-20 token for $PIZZA in tests
+- Use a mock ERC-20 token (MockUSDC with 6 decimals) in tests
 
 ### Backend Tests (Vitest)
 
@@ -479,7 +481,7 @@ Env vars:      SCREAMING_SNAKE_CASE    (PINATA_API_KEY, BASE_RPC_URL)
 - [ ] Deploy CrustiesNFT to Base Sepolia with test parameters
 - [ ] Verify contract on BaseScan (Sepolia)
 - [ ] Test mint with ETH on testnet
-- [ ] Test mint with mock $PIZZA on testnet
+- [ ] Test mint with USDC on testnet
 - [ ] Deploy backend to staging
 - [ ] Test full flow: generate → pin → mint on testnet
 - [ ] Deploy CrustiesNFT to Base Mainnet
@@ -494,7 +496,7 @@ Env vars:      SCREAMING_SNAKE_CASE    (PINATA_API_KEY, BASE_RPC_URL)
 
 ## Common Pitfalls
 
-1. **$PIZZA approval before mint** — Users MUST call `approve(crustiesContractAddress, amount)` on the $PIZZA token contract before calling `mintWithToken`. The frontend must handle this two-step flow.
+1. **USDC approval before mint** — Users MUST call `approve(crustiesContractAddress, amount)` on the USDC contract before calling `mintWithToken`. The frontend must handle this two-step flow.
 2. **IPFS URI format** — Use `ipfs://Qm...` format (not gateway URLs) for the token URI stored on-chain. Frontends/marketplaces resolve this to their preferred gateway.
 3. **Gas estimation** — `mintWithToken` uses more gas than `mintWithETH` because of the ERC-20 `transferFrom`. Account for this in frontend gas estimates.
 4. **Deterministic generation** — The same FID should produce the same Crusties (unless re-roll is explicitly requested). Use a seeded random approach tied to FID + block data.
