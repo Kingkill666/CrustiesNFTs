@@ -4,10 +4,25 @@ import { sdk } from '@farcaster/miniapp-sdk';
 import { C, F } from '@/features/app/components/theme';
 
 const APP_URL = process.env.NEXT_PUBLIC_URL || 'https://crusties-vmf-coin.vercel.app';
+const MINIAPP_URL = 'https://farcaster.xyz/miniapps/b8-LN08vo1G6/crusties';
 
 /**
- * Build a share URL that includes fc:miniapp meta tags with the NFT image.
- * Farcaster clients scrape this URL to render a rich embed card in the cast.
+ * Build share embeds for composeCast.
+ * Returns [imageUrl, miniAppUrl] so the cast shows the NFT image
+ * and a clickable link to open the Crusties mini app.
+ */
+export function buildShareEmbeds(opts?: {
+  imageUrl?: string;
+}): [string] | [string, string] {
+  const imageUrl = opts?.imageUrl;
+  if (imageUrl) {
+    return [imageUrl, MINIAPP_URL];
+  }
+  return [MINIAPP_URL];
+}
+
+/**
+ * @deprecated Use buildShareEmbeds instead
  */
 export function buildShareUrl(opts?: {
   tokenId?: number;
@@ -37,19 +52,20 @@ export function ShareButton({
   embeds?: [] | [string] | [string, string];
 }) {
   const handleShare = async () => {
-    const embedUrls = embeds ?? [APP_URL];
+    const embedUrls = embeds ?? [MINIAPP_URL];
     try {
       await sdk.actions.composeCast({
         text,
-        embeds: embedUrls,
+        embeds: embedUrls as [] | [string] | [string, string],
         channelKey,
       });
     } catch (err) {
       console.warn('[ShareButton] composeCast failed, falling back to openUrl:', err);
       const encoded = encodeURIComponent(text);
       const channel = channelKey ? `&channelKey=${channelKey}` : '';
-      const embedParam = embedUrls[0] ? `&embeds[]=${encodeURIComponent(embedUrls[0])}` : '';
-      const url = `https://warpcast.com/~/compose?text=${encoded}${channel}${embedParam}`;
+      // For Warpcast fallback, embed each URL
+      const embedParams = embedUrls.map(u => `&embeds[]=${encodeURIComponent(u)}`).join('');
+      const url = `https://warpcast.com/~/compose?text=${encoded}${channel}${embedParams}`;
       try {
         sdk.actions.openUrl(url);
       } catch {

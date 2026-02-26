@@ -4,7 +4,7 @@ import { AppShell } from '@/features/app/components/app-shell';
 import { PrimaryBtn } from '@/features/app/components/ui-primitives';
 import { CrustieNFT } from '@/features/app/components/crustie-nft';
 import { C, F, RARITY_STYLES } from '@/features/app/components/theme';
-import { ShareButton, buildShareUrl } from '@/neynar-farcaster-sdk/mini';
+import { ShareButton, buildShareEmbeds } from '@/neynar-farcaster-sdk/mini';
 import { useOwnedCrusties } from '@/hooks/use-owned-crusties';
 import { CRUSTIES_CONTRACT_ADDRESS } from '@/lib/contract';
 
@@ -144,7 +144,7 @@ export function OwnedScreen({ fid, username, pfpUrl, onMintAnother, onHome }: Ow
               <div style={{ flex: 1 }}>
                 <ShareButton
                   text={`just dropped the craziest ${crustie.rarity} pizza NFT on Base 🍕🔥 Crustie #${crustie.tokenId} — "${crustie.vibe}" — generated from my Farcaster identity. no two are alike. mint yours 👇`}
-                  embeds={[buildShareUrl({ tokenId: crustie.tokenId, imageUrl: crustie.imageUrl, vibe: crustie.vibe, rarity: crustie.rarity })]}
+                  embeds={buildShareEmbeds({ imageUrl: crustie.imageUrl })}
                 >
                   Share 🍕
                 </ShareButton>

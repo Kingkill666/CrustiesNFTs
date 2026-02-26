@@ -4,7 +4,7 @@ import { AppShell } from '@/features/app/components/app-shell';
 import { Card, GhostBtn } from '@/features/app/components/ui-primitives';
 import { CrustieNFT } from '@/features/app/components/crustie-nft';
 import { C, F, RARITY_STYLES } from '@/features/app/components/theme';
-import { ShareButton, AddMiniAppButton, buildShareUrl } from '@/neynar-farcaster-sdk/mini';
+import { ShareButton, AddMiniAppButton, buildShareEmbeds } from '@/neynar-farcaster-sdk/mini';
 import type { RarityTier } from '@/features/app/types';
 
 interface SuccessScreenProps {
@@ -170,7 +170,7 @@ export function SuccessScreen({
 
         <ShareButton
           text={`just dropped the craziest ${rarity} pizza NFT on Base 🍕🔥 Crustie #${tokenId} — "${vibe}" — generated from my Farcaster identity. no two are alike. mint yours 👇`}
-          embeds={[buildShareUrl({ tokenId, imageUrl, vibe, rarity })]}
+          embeds={buildShareEmbeds({ imageUrl })}
         >
           Share My Crustie 🍕
         </ShareButton>
