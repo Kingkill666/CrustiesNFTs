@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Vercel auto-deploy test
+  // Vercel Git-triggered deploy
 };
 
 module.exports = nextConfig;
