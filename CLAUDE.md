@@ -21,7 +21,7 @@
 
 ## Project Summary
 
-**Crusties** is an AI-generated pizza NFT (PFP) collection on **Base**. Users connect via Farcaster, our backend analyzes their on-chain + social identity, generates a unique pizza avatar, pins it to IPFS, and the user mints it on-chain. Supply is capped at 3,333. Payment accepted in Base ETH or USDC.
+**Crusties** is an AI-generated pizza NFT (PFP) collection on **Base**. Users connect via Farcaster, our backend analyzes their on-chain + social identity, generates a unique pizza avatar, pins it to IPFS, and the user mints it on-chain. Supply is capped at 500. Payment accepted in Base ETH or USDC.
 
 ---
 
@@ -30,7 +30,7 @@
 ```
 Network:              Base Mainnet (Chain ID 8453)
 USDC Token:           0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913 (6 decimals)
-Max Supply:           3,333
+Max Supply:           500
 Max Mints Per Wallet: 3
 Royalty:              2.5% (250 basis points, ERC-2981)
 Token Name:           Crusties
@@ -79,7 +79,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract ReferenceNFT is ERC721, ERC721URIStorage, ERC721Royalty, Ownable {
     uint256 public totalMinted;
-    uint256 public maxSupply = 3333;
+    uint256 public maxSupply = 500;
     uint256 public maxMintsPerWallet = 3;
     uint256 public minEthPrice;
     uint256 public minTokenPrice;

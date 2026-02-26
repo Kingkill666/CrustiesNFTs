@@ -120,7 +120,7 @@ export function LandingScreen({ onStart, onViewOwned }: { onStart: () => void; o
           maxWidth: 280,
           fontFamily: F.body,
         }}>
-          3,333 unique pizza slice NFTs on Base — each one generated from your Farcaster identity
+          500 unique pizza slice NFTs on Base — each one generated from your Farcaster identity
         </p>
       </div>
 
@@ -190,8 +190,9 @@ export function LandingScreen({ onStart, onViewOwned }: { onStart: () => void; o
         borderRadius: 20,
         padding: 16,
         boxShadow: `4px 4px 0 rgba(232,93,4,0.1)`,
+        overflow: 'visible',
       }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <p style={{
             fontFamily: F.display, fontSize: 14, letterSpacing: 2,
             textTransform: 'uppercase', color: C.crust, margin: 0,
@@ -212,7 +213,7 @@ export function LandingScreen({ onStart, onViewOwned }: { onStart: () => void; o
         </div>
 
         {galleryLoading ? (
-          <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 6, paddingTop: 12 }}>
+          <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 0, paddingTop: 24 }}>
             {Array.from({ length: 5 }).map((_, i) => (
               <div key={i} style={{
                 width: 74, height: 94, borderRadius: 16, flexShrink: 0,
@@ -224,7 +225,7 @@ export function LandingScreen({ onStart, onViewOwned }: { onStart: () => void; o
         ) : gallery.length > 0 ? (
           <div style={{ position: 'relative' }}>
             <div style={{
-              display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 6,
+              display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 0, paddingTop: 24,
               scrollbarWidth: 'none',
             }}>
               {gallery.map((entry, i) => (
@@ -261,9 +262,9 @@ export function LandingScreen({ onStart, onViewOwned }: { onStart: () => void; o
             <div
               style={{
                 position: 'absolute',
-                top: 12,
+                top: 24,
                 right: 0,
-                bottom: 6,
+                bottom: 0,
                 width: 28,
                 background: 'linear-gradient(to right, transparent, rgba(255,255,255,0.95))',
                 pointerEvents: 'none',
@@ -290,7 +291,7 @@ export function LandingScreen({ onStart, onViewOwned }: { onStart: () => void; o
       {/* ── Stats grid ────────────────────────────────────────────────────────── */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
         {[
-          { val: '3,333',  lbl: 'Total supply', color: C.orange, bg: C.orangeL },
+          { val: '500',  lbl: 'Total supply', color: C.orange, bg: C.orangeL },
           { val: '0.001Ξ', lbl: 'or $3 USDC',   color: C.green,  bg: '#edf7f0' },
           { val: '∞',      lbl: 'per wallet',    color: C.red,    bg: '#fff0f0' },
         ].map(({ val, lbl, color, bg }) => (

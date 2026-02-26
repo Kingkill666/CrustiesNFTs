@@ -40,7 +40,7 @@ export async function GET() {
       webhookUrl: "https://api.neynar.com/f/app/591d8b55-2775-4b41-80d0-888f8d18f578/event",
       subtitle: "AI Pizza PFPs on Base",
       description:
-        "Crusties are 3,333 AI-generated pizza slice NFTs on Base. Connect your Farcaster identity and get a unique pizza character minted to your wallet. Your vibe, baked in.",
+        "Crusties are 500 AI-generated pizza slice NFTs on Base. Connect your Farcaster identity and get a unique pizza character minted to your wallet. Your vibe, baked in.",
       screenshotUrls: [],
       primaryCategory: "social",
       tags: ["nft", "pizza", "ai", "farcaster", "base"],

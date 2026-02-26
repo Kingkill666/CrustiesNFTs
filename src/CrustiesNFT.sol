@@ -103,7 +103,7 @@ contract CrustiesNFT is
         treasury = _treasury;
         minEthPrice = _minEthPrice;
         minTokenPrice = _minTokenPrice;
-        maxSupply = 3333;
+        maxSupply = 500;
         maxMintsPerWallet = 3;
         signer = _signer;
         _setDefaultRoyalty(_treasury, 250);

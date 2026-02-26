@@ -11,7 +11,7 @@ export function useSupply() {
   });
 
   const minted = totalMinted ? Number(totalMinted) : 0;
-  const total  = 3333;
+  const total  = 500;
 
   return { total, minted };
 }

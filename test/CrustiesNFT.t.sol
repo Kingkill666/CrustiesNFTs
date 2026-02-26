@@ -106,7 +106,7 @@ contract CrustiesNFTTest is Test {
     function test_Initialize() public view {
         assertEq(nft.name(), "Crusties");
         assertEq(nft.symbol(), "CRUSTIES");
-        assertEq(nft.maxSupply(), 3333);
+        assertEq(nft.maxSupply(), 500);
         assertEq(nft.maxMintsPerWallet(), 3);
         assertEq(nft.minEthPrice(), MIN_ETH_PRICE);
         assertEq(nft.minTokenPrice(), MIN_TOKEN_PRICE);
@@ -414,7 +414,7 @@ contract CrustiesNFTTest is Test {
     }
 
     function test_RemainingSupply() public {
-        assertEq(nft.remainingSupply(), 3333);
+        assertEq(nft.remainingSupply(), 500);
 
         bytes memory sig = _signMintPermit(signerPrivateKey, alice, TOKEN_URI, 0);
         vm.prank(alice);

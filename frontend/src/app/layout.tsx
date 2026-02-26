@@ -8,7 +8,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: "Crusties — AI Pizza PFPs on Base",
     description:
-      "Mint your unique AI-generated pizza PFP based on your Farcaster vibe. 3,333 supply on Base.",
+      "Mint your unique AI-generated pizza PFP based on your Farcaster vibe. 500 supply on Base.",
     other: {
       "fc:miniapp": JSON.stringify({
         version: "1",

@@ -84,7 +84,7 @@ export function PreviewScreen({ traits, vibe, rarity = 'Common', tokenId = 1848,
           color: C.muted, margin: 0, textTransform: 'uppercase',
           zIndex: 1,
         }}>
-          Crustie #{tokenId} · 1 of 3,333
+          Crustie #{tokenId} · 1 of 500
         </p>
       </div>
 
