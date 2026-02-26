@@ -28,13 +28,14 @@ interface PipelineState {
   txHash?: string;
   payment?: PaymentMethod;
   error?: string;
+  /** Phase tracking for the mint screen button state */
+  preparing?: boolean;
 }
 
 export function MiniApp() {
   const [screen, setScreen] = useState<Screen>('landing');
   const [pipeline, setPipeline] = useState<PipelineState>({});
 
-  const generatePromiseRef = useRef<Promise<void> | null>(null);
   const mintStartedRef = useRef(false);
   const mintSuccessRef = useRef(false);
 
@@ -121,7 +122,7 @@ export function MiniApp() {
         : mintWriteError.message.includes('user rejected')
         ? 'Transaction cancelled.'
         : 'Transaction failed. Please try again.';
-      setPipeline(p => ({ ...p, error: msg }));
+      setPipeline(p => ({ ...p, error: msg, preparing: false }));
     }
   }, [mintWriteError]);
 
@@ -130,9 +131,16 @@ export function MiniApp() {
       const msg = approveWriteError.message.includes('user rejected')
         ? 'Approval cancelled.'
         : 'USDC approval failed. Please try again.';
-      setPipeline(p => ({ ...p, error: msg }));
+      setPipeline(p => ({ ...p, error: msg, preparing: false }));
     }
   }, [approveWriteError]);
+
+  // ── When wallet prompt appears (pending), move to minting screen ────────────
+  useEffect(() => {
+    if ((isMintPending || isApprovePending) && screen === 'mint') {
+      setScreen('minting');
+    }
+  }, [isMintPending, isApprovePending, screen]);
 
   // ── Navigation handlers ─────────────────────────────────────────────────────
 
@@ -147,68 +155,61 @@ export function MiniApp() {
     setScreen('mint');
   }, []);
 
-  // Mint → Minting: user picks payment and confirms
-  // 1. Kick off generate() to get tokenURI + signature
-  // 2. Once generate resolves, fire the actual contract write
-  const handleMintConfirm = useCallback((method: PaymentMethod) => {
+  // ── Mint flow: generate → wallet prompt (stays on mint screen) → minting screen ──
+  const handleMintConfirm = useCallback(async (method: PaymentMethod) => {
     mintStartedRef.current = false;
     mintSuccessRef.current = false;
-    setPipeline(p => ({ ...p, payment: method, error: undefined }));
+    setPipeline(p => ({ ...p, payment: method, error: undefined, preparing: true }));
 
-    // Start generate — get tokenURI + signature from backend
-    generatePromiseRef.current = generate(fid ?? undefined, address).then((data) => {
-      if (data) {
-        const sig = data.signature as string | undefined;
-        const uri = data.ipfsUri;
+    try {
+      // Step 1: Generate the Crustie (backend call) while showing "Preparing..." on button
+      const data = await generate(fid ?? undefined, address);
 
-        setPipeline(p => ({
-          ...p,
-          imageUrl: data.imageUrl,
-          tokenURI: uri,
-          signature: sig,
-        }));
-
-        // Now fire the actual contract mint
-        if (!sig) {
-          setPipeline(p => ({ ...p, error: 'Missing mint signature. Backend may not be configured.' }));
-          return;
-        }
-
-        const sigBytes = sig as `0x${string}`;
-
-        if (method === 'eth') {
-          // Direct ETH mint
-          writeMint({
-            address: CRUSTIES_CONTRACT_ADDRESS,
-            abi: CRUSTIES_ABI,
-            functionName: 'mintWithETH',
-            args: [uri, sigBytes],
-            value: BigInt(1000000000000000), // 0.001 ETH fallback
-          });
-        } else {
-          // USDC: step 1 = approve, step 2 fires in useEffect above
-          writeApprove({
-            address: USDC_TOKEN_ADDRESS,
-            abi: ERC20_ABI,
-            functionName: 'approve',
-            args: [CRUSTIES_CONTRACT_ADDRESS, BigInt(3000000)], // $3 USDC fallback
-          });
-        }
+      if (!data) {
+        setPipeline(p => ({ ...p, error: 'Generation failed. Please try again.', preparing: false }));
+        return;
       }
-    });
 
-    setScreen('minting');
-  }, [fid, address, generate, writeMint, writeApprove]);
+      const sig = data.signature as string | undefined;
+      const uri = data.ipfsUri;
 
-  // MintingScreen calls this when its animation finishes (after generate resolves)
-  // But we DON'T advance to success here — we wait for on-chain confirmation above
-  const handleMintingDone = useCallback((result: { tokenId?: number; txHash?: string; mintStatus: 'success' | 'error' }) => {
-    // If there was an error from the minting screen's own logic, handle it
-    if (result.mintStatus === 'error') {
-      setPipeline(p => ({ ...p, error: 'Something went wrong during minting.' }));
+      setPipeline(p => ({
+        ...p,
+        imageUrl: data.imageUrl,
+        tokenURI: uri,
+        signature: sig,
+      }));
+
+      if (!sig) {
+        setPipeline(p => ({ ...p, error: 'Missing mint signature. Backend may not be configured.', preparing: false }));
+        return;
+      }
+
+      const sigBytes = sig as `0x${string}`;
+
+      // Step 2: Fire the wallet prompt — user is still on the mint screen
+      // The useEffect above will transition to 'minting' when isPending flips true
+      if (method === 'eth') {
+        writeMint({
+          address: CRUSTIES_CONTRACT_ADDRESS,
+          abi: CRUSTIES_ABI,
+          functionName: 'mintWithETH',
+          args: [uri, sigBytes],
+          value: minEthPrice ?? BigInt(1000000000000000),
+        });
+      } else {
+        writeApprove({
+          address: USDC_TOKEN_ADDRESS,
+          abi: ERC20_ABI,
+          functionName: 'approve',
+          args: [CRUSTIES_CONTRACT_ADDRESS, minTokenPrice ?? BigInt(3000000)],
+        });
+      }
+    } catch (err) {
+      console.error('Mint flow error:', err);
+      setPipeline(p => ({ ...p, error: 'Something went wrong. Please try again.', preparing: false }));
     }
-    // Success transition is handled by the useEffect watching isMintConfirmed
-  }, []);
+  }, [fid, address, generate, writeMint, writeApprove, minEthPrice, minTokenPrice]);
 
   const handleViewOwned = useCallback(() => {
     setScreen('owned');
@@ -232,6 +233,8 @@ export function MiniApp() {
       <MintScreen
         onConfirm={handleMintConfirm}
         onHome={goLanding}
+        preparing={pipeline.preparing}
+        error={pipeline.error}
       />
     );
   }
@@ -241,8 +244,6 @@ export function MiniApp() {
       <MintingScreen
         payment={pipeline.payment}
         tokenURI={pipeline.tokenURI}
-        generatePromise={generatePromiseRef.current}
-        onDone={handleMintingDone}
         onHome={goLanding}
         isMintPending={isMintPending || isApprovePending || isConfirmingApprove || isConfirmingMint}
         mintError={pipeline.error}

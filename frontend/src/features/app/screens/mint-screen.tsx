@@ -12,9 +12,13 @@ const USDC_COLOR = '#2775CA';
 interface MintScreenProps {
   onConfirm: (method: PaymentMethod) => void;
   onHome?: () => void;
+  /** True while backend generate is in-flight (before wallet prompt) */
+  preparing?: boolean;
+  /** Error message to display */
+  error?: string;
 }
 
-export function MintScreen({ onConfirm, onHome }: MintScreenProps) {
+export function MintScreen({ onConfirm, onHome, preparing, error }: MintScreenProps) {
   const [payment, setPayment] = useState<PaymentMethod>('eth');
   const isEth = payment === 'eth';
 
@@ -50,13 +54,14 @@ export function MintScreen({ onConfirm, onHome }: MintScreenProps) {
         </p>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
 
-          <button onClick={() => setPayment('eth')} style={{
+          <button onClick={() => !preparing && setPayment('eth')} style={{
             padding: '18px 12px', borderRadius: 20,
             border: `2.5px solid ${isEth ? ETH_COLOR : C.border}`,
             background: isEth ? `linear-gradient(145deg, #eff6ff 0%, #dbeafe 100%)` : '#fafafa',
-            cursor: 'pointer', textAlign: 'center',
+            cursor: preparing ? 'not-allowed' : 'pointer', textAlign: 'center',
             boxShadow: isEth ? `0 4px 0 ${ETH_COLOR}35` : `2px 2px 0 rgba(0,0,0,0.04)`,
             transition: 'all 0.18s ease', position: 'relative',
+            opacity: preparing ? 0.6 : 1,
           }}>
             {isEth && (
               <div style={{
@@ -88,13 +93,14 @@ export function MintScreen({ onConfirm, onHome }: MintScreenProps) {
             }}>Base ETH</div>
           </button>
 
-          <button onClick={() => setPayment('usdc')} style={{
+          <button onClick={() => !preparing && setPayment('usdc')} style={{
             padding: '18px 12px', borderRadius: 20,
             border: `2.5px solid ${!isEth ? USDC_COLOR : C.border}`,
             background: !isEth ? `linear-gradient(145deg, #eff8ff 0%, #dbeeff 100%)` : '#fafafa',
-            cursor: 'pointer', textAlign: 'center',
+            cursor: preparing ? 'not-allowed' : 'pointer', textAlign: 'center',
             boxShadow: !isEth ? `0 4px 0 ${USDC_COLOR}35` : `2px 2px 0 rgba(0,0,0,0.04)`,
             transition: 'all 0.18s ease', position: 'relative',
+            opacity: preparing ? 0.6 : 1,
           }}>
             {!isEth && (
               <div style={{
@@ -153,22 +159,43 @@ export function MintScreen({ onConfirm, onHome }: MintScreenProps) {
         </div>
       </Card>
 
+      {/* Error banner */}
+      {error && (
+        <div style={{
+          borderRadius: 14, background: '#fff0f0', border: `2px solid ${C.red}40`, padding: '12px 14px',
+          display: 'flex', gap: 10, alignItems: 'center',
+        }}>
+          <span style={{ fontSize: 20, flexShrink: 0 }}>❌</span>
+          <div>
+            <p style={{ fontFamily: F.body, fontWeight: 800, color: C.red, margin: '0 0 2px', fontSize: 13 }}>{error}</p>
+            <p style={{ fontSize: 11, color: C.muted, margin: 0, fontWeight: 600 }}>Your wallet was not charged. Try again.</p>
+          </div>
+        </div>
+      )}
+
       <button
-        onClick={() => onConfirm(payment)}
+        onClick={() => !preparing && onConfirm(payment)}
+        disabled={preparing}
         style={{
           width: '100%', borderRadius: 18,
           border: `2.5px solid ${C.orangeD}`,
-          background: `linear-gradient(160deg, ${C.orange} 0%, ${C.orangeD} 100%)`,
-          padding: '18px 16px', cursor: 'pointer',
+          background: preparing
+            ? `linear-gradient(160deg, ${C.orange}90 0%, ${C.orangeD}90 100%)`
+            : `linear-gradient(160deg, ${C.orange} 0%, ${C.orangeD} 100%)`,
+          padding: '18px 16px', cursor: preparing ? 'not-allowed' : 'pointer',
           boxShadow: `0 4px 0 ${C.orangeD}`,
           minHeight: 62,
+          opacity: preparing ? 0.85 : 1,
+          transition: 'all 0.2s ease',
         }}
       >
         <p style={{ color: '#fff', fontWeight: 900, fontSize: 20, margin: 0, fontFamily: F.display, letterSpacing: 0.5 }}>
-          🍕 Bake My Crustie
+          {preparing ? '🍕 Preparing Your Crustie...' : '🍕 Bake My Crustie'}
         </p>
         <p style={{ color: 'rgba(255,255,255,0.72)', fontSize: 12, margin: '4px 0 0', fontWeight: 600 }}>
-          {isEth ? 'Wallet will prompt for 0.001 ETH + gas' : 'Wallet will prompt for USDC approval, then mint'}
+          {preparing
+            ? 'Generating your NFT — wallet will prompt shortly'
+            : isEth ? 'Wallet will prompt for 0.001 ETH + gas' : 'Wallet will prompt for USDC approval, then mint'}
         </p>
       </button>
 

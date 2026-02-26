@@ -191,7 +191,7 @@ export function LandingScreen({ onStart, onViewOwned }: { onStart: () => void; o
         padding: 16,
         boxShadow: `4px 4px 0 rgba(232,93,4,0.1)`,
       }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
           <p style={{
             fontFamily: F.display, fontSize: 14, letterSpacing: 2,
             textTransform: 'uppercase', color: C.crust, margin: 0,
@@ -212,7 +212,7 @@ export function LandingScreen({ onStart, onViewOwned }: { onStart: () => void; o
         </div>
 
         {galleryLoading ? (
-          <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 6 }}>
+          <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 6, paddingTop: 12 }}>
             {Array.from({ length: 5 }).map((_, i) => (
               <div key={i} style={{
                 width: 74, height: 94, borderRadius: 16, flexShrink: 0,
@@ -222,39 +222,53 @@ export function LandingScreen({ onStart, onViewOwned }: { onStart: () => void; o
             ))}
           </div>
         ) : gallery.length > 0 ? (
-          <div style={{
-            display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 6,
-            scrollbarWidth: 'none',
-          }}>
-            {gallery.map((entry, i) => (
-              <div key={entry.tokenId} style={{
-                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
-                flexShrink: 0,
-                animation: `float-pizza ${3 + i * 0.28}s ease-in-out infinite`,
-                animationDelay: `${i * 0.22}s`,
-              }}>
-                <div style={{
-                  borderRadius: 14, border: `2px solid ${C.orange}30`,
-                  background: '#111', padding: 3,
-                  boxShadow: `2px 2px 0 ${C.orange}15`,
-                  transform: `rotate(${entry.rotation}) scaleX(${entry.flipX ? -1 : 1})`,
+          <div style={{ position: 'relative' }}>
+            <div style={{
+              display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 6,
+              scrollbarWidth: 'none',
+            }}>
+              {gallery.map((entry, i) => (
+                <div key={entry.tokenId} style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
+                  flexShrink: 0,
+                  animation: `float-pizza ${3 + i * 0.28}s ease-in-out infinite`,
+                  animationDelay: `${i * 0.22}s`,
                 }}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={entry.imageUrl}
-                    alt={`Crustie #${entry.tokenId}`}
-                    width={66} height={66}
-                    style={{ borderRadius: 11, objectFit: 'cover', display: 'block', filter: entry.filter }}
-                  />
+                  <div style={{
+                    borderRadius: 14, border: `2px solid ${C.orange}30`,
+                    background: '#111', padding: 3,
+                    boxShadow: `2px 2px 0 ${C.orange}15`,
+                    transform: `rotate(${entry.rotation}) scaleX(${entry.flipX ? -1 : 1})`,
+                  }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={entry.imageUrl}
+                      alt={`Crustie #${entry.tokenId}`}
+                      width={66} height={66}
+                      style={{ borderRadius: 11, objectFit: 'cover', display: 'block', filter: entry.filter }}
+                    />
+                  </div>
+                  <p style={{
+                    fontFamily: F.body, fontSize: 10, fontWeight: 700,
+                    color: C.muted, margin: 0,
+                  }}>
+                    @{entry.minterUsername}
+                  </p>
                 </div>
-                <p style={{
-                  fontFamily: F.body, fontSize: 10, fontWeight: 700,
-                  color: C.muted, margin: 0,
-                }}>
-                  @{entry.minterUsername}
-                </p>
-              </div>
-            ))}
+              ))}
+            </div>
+            {/* Small right-edge fade to hint at scroll */}
+            <div
+              style={{
+                position: 'absolute',
+                top: 12,
+                right: 0,
+                bottom: 6,
+                width: 28,
+                background: 'linear-gradient(to right, transparent, rgba(255,255,255,0.95))',
+                pointerEvents: 'none',
+              }}
+            />
           </div>
         ) : (
           <div style={{ textAlign: 'center', padding: '24px 0' }}>
