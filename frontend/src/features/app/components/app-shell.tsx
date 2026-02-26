@@ -90,15 +90,6 @@ export function AppShell({ children, onHome }: AppShellProps) {
             rel="noopener noreferrer"
             style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none', flexShrink: 0 }}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/images/logo.png"
-              alt="Pizza Party"
-              width={36}
-              height={36}
-              style={{ borderRadius: 10, objectFit: 'cover', display: 'block' }}
-              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-            />
             <span
               style={{
                 fontFamily: F.display,
@@ -112,6 +103,15 @@ export function AppShell({ children, onHome }: AppShellProps) {
             >
               Pizza Party
             </span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/images/logo.png"
+              alt="Pizza Party"
+              width={36}
+              height={36}
+              style={{ borderRadius: 10, objectFit: 'cover', display: 'block' }}
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+            />
           </a>
         </div>
 
