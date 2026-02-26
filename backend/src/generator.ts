@@ -17,7 +17,7 @@ function buildPrompt(traits: CrustiesTraits): string {
     .filter(Boolean)
     .join(", ");
 
-  return `A cute cartoon pizza character avatar with ${traitDescriptions}. The pizza has a face with expressive features. Digital art style, clean lines, vibrant colors, suitable for a profile picture. No text. Square format.`;
+  return `A cute cartoon pizza character PFP avatar with ${traitDescriptions}. The pizza has a face with expressive features. Digital art style, clean lines, vibrant colors, suitable for a profile picture. No text. Square format.`;
 }
 
 export async function generateImage(traits: CrustiesTraits): Promise<Buffer> {

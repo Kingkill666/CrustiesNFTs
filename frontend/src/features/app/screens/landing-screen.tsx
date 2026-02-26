@@ -338,8 +338,8 @@ export function LandingScreen({ onStart, onViewOwned }: { onStart: () => void; o
         />
         <HowStep
           emoji="🍕" color={C.red}
-          title="We generate your Crustie"
-          desc="Your signals map to 10 unique traits — baked into a one-of-a-kind pizza NFT just for you"
+          title="AI generates your Crustie"
+          desc="Your signals map to 10 unique traits — an AI bakes your one-of-a-kind pizza PFP just for you"
         />
         <HowStep
           emoji="📌" color={C.green}
