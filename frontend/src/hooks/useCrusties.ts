@@ -67,7 +67,7 @@ export function useCrusties() {
     query: { enabled: CRUSTIES_CONTRACT_ADDRESS !== "0x" },
   });
 
-  const generate = useCallback(async (fid?: number, minterAddress?: string) => {
+  const generate = useCallback(async (fid?: number, minterAddress?: string): Promise<GeneratedData | null> => {
     const userFid = fid ?? 1; // Falls back to 1 for testing outside Farcaster
     setIsGenerating(true);
     try {
@@ -79,10 +79,12 @@ export function useCrusties() {
 
       if (!res.ok) throw new Error("Generation failed");
 
-      const data = await res.json();
+      const data: GeneratedData = await res.json();
       setGeneratedData(data);
+      return data;
     } catch (err) {
       console.error("Generate error:", err);
+      return null;
     } finally {
       setIsGenerating(false);
     }

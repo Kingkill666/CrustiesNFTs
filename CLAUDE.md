@@ -4,6 +4,12 @@
 
 ---
 
+## WORKING DIRECTORY
+
+**Always work from `/Users/michaelgray/Desktop/CrustiesNFTs`** — this is the canonical project folder. Never use `/Users/michaelgray/CrustiesNFTs` or any other path.
+
+---
+
 ## CRITICAL SECURITY RULES
 
 1. **NEVER commit `.env` files, private keys, API keys, or secrets to git.** The `.gitignore` must always include `.env`, `.env.local`, `.env.production`, `*.pem`, and `*.key`.
