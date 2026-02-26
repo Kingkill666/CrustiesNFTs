@@ -6,10 +6,12 @@ import { CrustieNFT } from '@/features/app/components/crustie-nft';
 import { C, F, RARITY_STYLES } from '@/features/app/components/theme';
 import { ShareButton, buildShareUrl } from '@/neynar-farcaster-sdk/mini';
 import { useOwnedCrusties } from '@/hooks/use-owned-crusties';
+import { CRUSTIES_CONTRACT_ADDRESS } from '@/lib/contract';
 
 interface OwnedScreenProps {
   fid?: number;
   username?: string;
+  pfpUrl?: string;
   onMintAnother: () => void;
   onHome?: () => void;
 }
@@ -33,7 +35,7 @@ function SkeletonCard() {
   );
 }
 
-export function OwnedScreen({ fid, username, onMintAnother, onHome }: OwnedScreenProps) {
+export function OwnedScreen({ fid, username, pfpUrl, onMintAnother, onHome }: OwnedScreenProps) {
   const { crusties, isLoading } = useOwnedCrusties(fid);
 
   return (
@@ -62,11 +64,24 @@ export function OwnedScreen({ fid, username, onMintAnother, onHome }: OwnedScree
             )}
           </p>
         </div>
-        <div style={{
-          width: 52, height: 52, borderRadius: '50%',
-          background: 'rgba(255,255,255,0.18)', border: '2.5px solid rgba(255,255,255,0.35)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26,
-        }}>🍕</div>
+        {pfpUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={pfpUrl}
+            alt={username ? `@${username}` : 'Profile'}
+            style={{
+              width: 52, height: 52, borderRadius: '50%',
+              border: '2.5px solid rgba(255,255,255,0.5)',
+              objectFit: 'cover',
+            }}
+          />
+        ) : (
+          <div style={{
+            width: 52, height: 52, borderRadius: '50%',
+            background: 'rgba(255,255,255,0.18)', border: '2.5px solid rgba(255,255,255,0.35)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26,
+          }}>🍕</div>
+        )}
       </div>
 
       {isLoading && (
@@ -134,20 +149,23 @@ export function OwnedScreen({ fid, username, onMintAnother, onHome }: OwnedScree
                   Share 🍕
                 </ShareButton>
               </div>
-              {crustie.txHash && (
-                <button
-                  onClick={() => window.open(`https://basescan.org/tx/${crustie.txHash}`, '_blank')}
-                  style={{
-                    flex: 1, background: 'transparent',
-                    border: `1.5px solid ${r.border}`, borderRadius: 12,
-                    padding: '9px 14px', cursor: 'pointer', color: r.text,
-                    fontWeight: 800, fontSize: 12, fontFamily: F.body,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, minHeight: 44,
-                  }}
-                >
-                  <span>⛓️</span><span>BaseScan</span><span style={{ fontSize: 11 }}>↗</span>
-                </button>
-              )}
+              <button
+                onClick={() => {
+                  const url = crustie.txHash
+                    ? `https://basescan.org/tx/${crustie.txHash}`
+                    : `https://basescan.org/token/${CRUSTIES_CONTRACT_ADDRESS}?a=${crustie.tokenId}`;
+                  window.open(url, '_blank');
+                }}
+                style={{
+                  flex: 1, background: 'transparent',
+                  border: `1.5px solid ${r.border}`, borderRadius: 12,
+                  padding: '9px 14px', cursor: 'pointer', color: r.text,
+                  fontWeight: 800, fontSize: 12, fontFamily: F.body,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, minHeight: 44,
+                }}
+              >
+                <span>⛓️</span><span>BaseScan</span><span style={{ fontSize: 11 }}>↗</span>
+              </button>
             </div>
           </div>
         );

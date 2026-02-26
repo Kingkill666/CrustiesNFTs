@@ -39,7 +39,7 @@ export function MiniApp() {
   const mintSuccessRef = useRef(false);
 
   const { address } = useAccount();
-  const { fid, username } = useFarcasterContext();
+  const { fid, username, pfpUrl } = useFarcasterContext();
   const { generate, minEthPrice, minTokenPrice } = useCrusties();
 
   // ── Mint contract write ─────────────────────────────────────────────────────
@@ -320,6 +320,7 @@ export function MiniApp() {
       <OwnedScreen
         fid={fid ?? undefined}
         username={username ?? undefined}
+        pfpUrl={pfpUrl ?? undefined}
         onMintAnother={handleMintAnother}
         onHome={goLanding}
       />
