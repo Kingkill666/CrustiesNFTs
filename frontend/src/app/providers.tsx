@@ -11,11 +11,17 @@ import { useEffect, useState } from "react";
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient());
 
-  // Signal ready to Farcaster client as early as possible to hide the splash screen
+  // Signal ready to Farcaster client to hide the splash screen
   useEffect(() => {
-    sdk.actions.ready().catch((err) => {
-      console.warn("[Providers] sdk.actions.ready() failed:", err);
-    });
+    const init = async () => {
+      try {
+        await sdk.actions.ready();
+        console.log("[Providers] sdk.actions.ready() succeeded");
+      } catch (err) {
+        console.warn("[Providers] sdk.actions.ready() failed:", err);
+      }
+    };
+    init();
   }, []);
 
   return (
