@@ -420,7 +420,7 @@ contract CrustiesNFTTest is Test {
         vm.prank(alice);
         nft.mintWithETH{value: MIN_ETH_PRICE}(TOKEN_URI, sig);
 
-        assertEq(nft.remainingSupply(), 3332);
+        assertEq(nft.remainingSupply(), 499);
     }
 
     // ==================== Pausable ====================

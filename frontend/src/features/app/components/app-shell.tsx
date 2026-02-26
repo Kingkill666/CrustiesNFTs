@@ -83,26 +83,13 @@ export function AppShell({ children, onHome }: AppShellProps) {
             </span>
           </div>
 
-          {/* Pizza Party logo + text */}
+          {/* Pizza Party logo */}
           <a
             href="https://farcaster.xyz/miniapps/wgY6OPqYoIkz/pizza-party"
             target="_blank"
             rel="noopener noreferrer"
-            style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none', flexShrink: 0 }}
+            style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', flexShrink: 0 }}
           >
-            <span
-              style={{
-                fontFamily: F.display,
-                fontSize: 38,
-                color: C.red,
-                letterSpacing: 2,
-                lineHeight: 1,
-                paddingTop: 6,
-                whiteSpace: 'nowrap',
-              }}
-            >
-              Pizza Party
-            </span>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/images/logo.png"
