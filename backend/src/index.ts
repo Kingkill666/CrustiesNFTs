@@ -1,4 +1,9 @@
-import "dotenv/config";
+import { config } from "dotenv";
+import { resolve } from "path";
+
+// Load .env from backend/ first, then fall back to root .env
+config(); // tries ./backend/.env (if CWD is backend/)
+config({ path: resolve(process.cwd(), "../.env") }); // tries root .env
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { cors } from "hono/cors";

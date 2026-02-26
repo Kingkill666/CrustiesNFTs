@@ -80,6 +80,7 @@ export function MiniApp() {
   // ── When approval confirms, auto-fire the mint ──────────────────────────────
   useEffect(() => {
     if (isApproveConfirmed && pipeline.tokenURI && pipeline.signature && minTokenPrice) {
+      console.log('[MiniApp] USDC approval confirmed, firing mintWithToken...');
       const sigBytes = pipeline.signature as `0x${string}`;
       writeMint({
         address: CRUSTIES_CONTRACT_ADDRESS,
@@ -93,6 +94,7 @@ export function MiniApp() {
   // ── When mint tx is confirmed on-chain, extract tokenId → success ───────────
   useEffect(() => {
     if (isMintConfirmed && mintReceipt && mintHash && !mintSuccessRef.current) {
+      console.log('[MiniApp] Mint confirmed on-chain!', { mintHash, logsCount: mintReceipt.logs.length });
       mintSuccessRef.current = true;
 
       let tokenId: number | undefined;
@@ -117,6 +119,7 @@ export function MiniApp() {
   // ── Handle write errors ─────────────────────────────────────────────────────
   useEffect(() => {
     if (mintWriteError) {
+      console.error('[MiniApp] mintWriteError:', mintWriteError.message, mintWriteError);
       const msg = mintWriteError.message.includes('Cannot mint')
         ? "You've reached the max mints per wallet"
         : mintWriteError.message.includes('user rejected')
@@ -128,6 +131,7 @@ export function MiniApp() {
 
   useEffect(() => {
     if (approveWriteError) {
+      console.error('[MiniApp] approveWriteError:', approveWriteError.message, approveWriteError);
       const msg = approveWriteError.message.includes('user rejected')
         ? 'Approval cancelled.'
         : 'USDC approval failed. Please try again.';
@@ -155,23 +159,55 @@ export function MiniApp() {
     setScreen('mint');
   }, []);
 
+  // ── Debug: log key state on every render ───────────────────────────────────
+  useEffect(() => {
+    console.log('[MiniApp] State:', {
+      screen,
+      fid,
+      address,
+      contractAddress: CRUSTIES_CONTRACT_ADDRESS,
+      minEthPrice: minEthPrice?.toString(),
+      minTokenPrice: minTokenPrice?.toString(),
+      pipeline: {
+        hasImage: !!pipeline.imageUrl,
+        hasTokenURI: !!pipeline.tokenURI,
+        hasSig: !!pipeline.signature,
+        preparing: pipeline.preparing,
+        error: pipeline.error,
+      },
+    });
+  }, [screen, fid, address, minEthPrice, minTokenPrice, pipeline]);
+
   // ── Mint flow: generate → wallet prompt (stays on mint screen) → minting screen ──
   const handleMintConfirm = useCallback(async (method: PaymentMethod) => {
+    console.log('[MiniApp] handleMintConfirm called', { method, fid, address });
+
     mintStartedRef.current = false;
     mintSuccessRef.current = false;
     setPipeline(p => ({ ...p, payment: method, error: undefined, preparing: true }));
 
     try {
       // Step 1: Generate the Crustie (backend call) while showing "Preparing..." on button
+      console.log('[MiniApp] Calling generate...', { fid: fid ?? undefined, address });
       const data = await generate(fid ?? undefined, address);
 
+      console.log('[MiniApp] generate() returned:', data ? 'data' : 'null');
+
       if (!data) {
+        console.error('[MiniApp] generate() returned null — backend call failed');
         setPipeline(p => ({ ...p, error: 'Generation failed. Please try again.', preparing: false }));
         return;
       }
 
       const sig = data.signature as string | undefined;
       const uri = data.ipfsUri;
+
+      console.log('[MiniApp] Backend data:', {
+        ipfsUri: uri,
+        hasSig: !!sig,
+        sigLength: sig?.length,
+        imageUrl: data.imageUrl?.slice(0, 60),
+      });
 
       setPipeline(p => ({
         ...p,
@@ -183,6 +219,7 @@ export function MiniApp() {
       }));
 
       if (!sig) {
+        console.error('[MiniApp] No signature returned from backend!');
         setPipeline(p => ({ ...p, error: 'Missing mint signature. Backend may not be configured.', preparing: false }));
         return;
       }
@@ -192,6 +229,12 @@ export function MiniApp() {
       // Step 2: Fire the wallet prompt — user is still on the mint screen
       // The useEffect above will transition to 'minting' when isPending flips true
       if (method === 'eth') {
+        console.log('[MiniApp] Calling writeMint (mintWithETH)', {
+          contract: CRUSTIES_CONTRACT_ADDRESS,
+          uri,
+          sigPrefix: sigBytes.slice(0, 20),
+          value: (minEthPrice ?? BigInt(1000000000000000)).toString(),
+        });
         writeMint({
           address: CRUSTIES_CONTRACT_ADDRESS,
           abi: CRUSTIES_ABI,
@@ -200,6 +243,11 @@ export function MiniApp() {
           value: minEthPrice ?? BigInt(1000000000000000),
         });
       } else {
+        console.log('[MiniApp] Calling writeApprove (USDC)', {
+          usdcAddress: USDC_TOKEN_ADDRESS,
+          spender: CRUSTIES_CONTRACT_ADDRESS,
+          amount: (minTokenPrice ?? BigInt(3000000)).toString(),
+        });
         writeApprove({
           address: USDC_TOKEN_ADDRESS,
           abi: ERC20_ABI,
@@ -208,7 +256,7 @@ export function MiniApp() {
         });
       }
     } catch (err) {
-      console.error('Mint flow error:', err);
+      console.error('[MiniApp] Mint flow error:', err);
       setPipeline(p => ({ ...p, error: 'Something went wrong. Please try again.', preparing: false }));
     }
   }, [fid, address, generate, writeMint, writeApprove, minEthPrice, minTokenPrice]);

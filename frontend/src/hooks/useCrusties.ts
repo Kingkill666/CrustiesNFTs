@@ -70,20 +70,43 @@ export function useCrusties() {
   const generate = useCallback(async (fid?: number, minterAddress?: string): Promise<GeneratedData | null> => {
     const userFid = fid ?? 1; // Falls back to 1 for testing outside Farcaster
     setIsGenerating(true);
+
+    console.log("[Crusties] generate() called", { fid: userFid, minterAddress, API_URL });
+
     try {
-      const res = await fetch(`${API_URL}/api/generate`, {
+      const url = `${API_URL}/api/generate`;
+      const payload = { fid: userFid, minterAddress };
+      console.log("[Crusties] POST", url, JSON.stringify(payload));
+
+      const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fid: userFid, minterAddress }),
+        body: JSON.stringify(payload),
       });
 
-      if (!res.ok) throw new Error("Generation failed");
+      console.log("[Crusties] Response status:", res.status, res.statusText);
+
+      if (!res.ok) {
+        const errorBody = await res.text();
+        console.error("[Crusties] Backend error response:", res.status, errorBody);
+        throw new Error(`Generation failed: ${res.status} ${errorBody}`);
+      }
 
       const data: GeneratedData = await res.json();
+      console.log("[Crusties] Backend response:", {
+        ipfsUri: data.ipfsUri,
+        imageUrl: data.imageUrl?.slice(0, 80),
+        traits: data.traits,
+        crustieIndex: data.crustieIndex,
+        hasSignature: !!data.signature,
+        signaturePrefix: data.signature?.slice(0, 20),
+        nonce: data.nonce,
+      });
+
       setGeneratedData(data);
       return data;
     } catch (err) {
-      console.error("Generate error:", err);
+      console.error("[Crusties] Generate error:", err);
       return null;
     } finally {
       setIsGenerating(false);
