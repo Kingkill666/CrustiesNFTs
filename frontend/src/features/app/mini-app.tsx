@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { sdk } from '@farcaster/miniapp-sdk';
 import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { useFarcasterContext } from '@/hooks/useFarcasterContext';
 import { useCrusties } from '@/hooks/useCrusties';
@@ -71,11 +70,6 @@ export function MiniApp() {
     isSuccess: isMintConfirmed,
     data: mintReceipt,
   } = useWaitForTransactionReceipt({ hash: mintHash });
-
-  // Signal ready to Farcaster client
-  useEffect(() => {
-    sdk.actions.ready();
-  }, []);
 
   // ── When approval confirms, auto-fire the mint ──────────────────────────────
   useEffect(() => {
