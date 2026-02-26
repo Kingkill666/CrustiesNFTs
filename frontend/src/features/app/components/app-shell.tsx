@@ -59,18 +59,16 @@ export function AppShell({ children, onHome }: AppShellProps) {
           {/* Logo + wordmark */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <a href="https://farcaster.xyz/miniapps/wgY6OPqYoIkz/pizza-party" target="_blank" rel="noopener noreferrer">
-              <img
-                src="/images/app-logo.png"
-                alt="Crusties logo"
-                width={38}
-                height={38}
-                style={{ borderRadius: 10, objectFit: 'cover', display: 'block' }}
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = 'none';
-                }}
-              />
-            </a>
+            <img
+              src="/images/app-logo.png"
+              alt="Crusties logo"
+              width={38}
+              height={38}
+              style={{ borderRadius: 10, objectFit: 'cover', display: 'block' }}
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = 'none';
+              }}
+            />
             <span
               style={{
                 fontFamily: F.display,
@@ -85,17 +83,35 @@ export function AppShell({ children, onHome }: AppShellProps) {
             </span>
           </div>
 
-          {/* Pizza Party logo */}
-          <a href="https://farcaster.xyz/miniapps/wgY6OPqYoIkz/pizza-party" target="_blank" rel="noopener noreferrer">
+          {/* Pizza Party logo + text */}
+          <a
+            href="https://farcaster.xyz/miniapps/wgY6OPqYoIkz/pizza-party"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none', flexShrink: 0 }}
+          >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/images/logo.png"
               alt="Pizza Party"
               width={36}
               height={36}
-              style={{ borderRadius: 10, objectFit: 'cover', display: 'block', flexShrink: 0 }}
+              style={{ borderRadius: 10, objectFit: 'cover', display: 'block' }}
               onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
             />
+            <span
+              style={{
+                fontFamily: F.display,
+                fontSize: 38,
+                color: C.red,
+                letterSpacing: 2,
+                lineHeight: 1,
+                paddingTop: 6,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Pizza Party
+            </span>
           </a>
         </div>
 
