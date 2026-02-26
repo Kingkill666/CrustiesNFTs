@@ -13,6 +13,7 @@
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
 import { resolve, dirname } from "path";
+import type { CuratedCrustieEntry } from "./metadata-curated.js";
 
 const TOTAL_CRUSTIES = 499; // indices 0-498 (499 crusties — no crustie-103)
 
@@ -130,4 +131,95 @@ export function getAssignment(fid: number): number | null {
   const store = loadStore();
   const idx = store.fidToIndex[String(fid)];
   return idx !== undefined ? idx : null;
+}
+
+// ─── Tier-based assignment ───────────────────────────────────────────────────
+
+const CURATED_METADATA_FILE =
+  process.env.CURATED_METADATA_FILE ||
+  resolve(process.cwd(), "data/crusties-metadata.json");
+
+/** Cache: rarity tier → array of crustie indices (0-based) */
+let tierIndexCache: Record<string, number[]> | null = null;
+
+function getTierIndex(): Record<string, number[]> {
+  if (tierIndexCache) return tierIndexCache;
+
+  tierIndexCache = {};
+  if (!existsSync(CURATED_METADATA_FILE)) return tierIndexCache;
+
+  const entries: CuratedCrustieEntry[] = JSON.parse(
+    readFileSync(CURATED_METADATA_FILE, "utf-8")
+  );
+
+  for (const entry of entries) {
+    const crustieNum = parseInt(entry.id, 10);
+    // Convert crustie number to 0-based index
+    const idx = VALID_CRUSTIE_NUMBERS.indexOf(crustieNum);
+    if (idx === -1) continue;
+
+    const tier = entry.rarity;
+    if (!tierIndexCache[tier]) tierIndexCache[tier] = [];
+    tierIndexCache[tier].push(idx);
+  }
+
+  return tierIndexCache;
+}
+
+/**
+ * Assign a crustie to a FID, picking from a specific rarity tier.
+ * - If FID already has an assignment, returns it (ignores tier).
+ * - Otherwise, picks a random unclaimed crustie within the tier.
+ * - Falls back to any unclaimed crustie if the tier is exhausted.
+ * - Returns null if all 499 crusties are claimed.
+ */
+export function getOrAssignByTier(fid: number, tier: string): number | null {
+  const store = loadStore();
+
+  // Already assigned — return existing
+  const existing = store.fidToIndex[String(fid)];
+  if (existing !== undefined) return existing;
+
+  // All crusties claimed
+  if (store.claimedIndices.length >= TOTAL_CRUSTIES) return null;
+
+  const claimedSet = new Set(store.claimedIndices);
+  const tierMap = getTierIndex();
+  const tierIndices = tierMap[tier] || [];
+
+  // Find unclaimed indices within the requested tier
+  const available = tierIndices.filter((idx) => !claimedSet.has(idx));
+
+  if (available.length > 0) {
+    // Pick deterministically using FID seed
+    const seed = fidToStartIndex(fid);
+    const pick = available[seed % available.length];
+    store.fidToIndex[String(fid)] = pick;
+    store.claimedIndices.push(pick);
+    saveStore(store);
+    return pick;
+  }
+
+  // Tier exhausted — fall back to any unclaimed crustie
+  return getOrAssign(fid);
+}
+
+/**
+ * Re-roll: release the FID's current assignment and pick a new one in the same tier.
+ * Returns null if no more are available in that tier (or any tier).
+ */
+export function reassignByTier(fid: number, tier: string): number | null {
+  const store = loadStore();
+
+  // Release current assignment if one exists
+  const currentIdx = store.fidToIndex[String(fid)];
+  if (currentIdx !== undefined) {
+    delete store.fidToIndex[String(fid)];
+    store.claimedIndices = store.claimedIndices.filter((i) => i !== currentIdx);
+    saveStore(store);
+  }
+
+  // Clear tier cache isn't needed — we re-read claimed from store
+  // Now assign a new one in the requested tier
+  return getOrAssignByTier(fid, tier);
 }

@@ -92,6 +92,19 @@ const VIBES = [
   "Normie",
 ];
 
+// ─── Rarity tier mapping ─────────────────────────────────────────────────────
+
+export type RarityTier = "Common" | "Uncommon" | "Rare" | "Epic" | "Legendary";
+
+/** Maps a 0–100 rarity score to a tier matching the curated supply distribution. */
+export function rarityScoreToTier(score: number): RarityTier {
+  if (score >= 97) return "Legendary";  // ~3%
+  if (score >= 90) return "Epic";       // ~7%
+  if (score >= 78) return "Rare";       // ~12%
+  if (score >= 63) return "Uncommon";   // ~15%
+  return "Common";                      // ~63%
+}
+
 // ─── Seeded RNG ────────────────────────────────────────────────────────────────
 
 function seededRandom(seed: number): () => number {

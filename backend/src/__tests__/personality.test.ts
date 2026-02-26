@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { computeTraits } from "../personality.js";
+import { computeTraits, rarityScoreToTier } from "../personality.js";
 import type { FarcasterUser } from "../farcaster.js";
 import type { OnChainData } from "../onchain.js";
 
@@ -132,5 +132,47 @@ describe("computeTraits", () => {
     );
 
     expect(traits.topping).toBe("truffle");
+  });
+});
+
+describe("rarityScoreToTier", () => {
+  it("maps 0 to Common", () => {
+    expect(rarityScoreToTier(0)).toBe("Common");
+  });
+
+  it("maps 62 to Common", () => {
+    expect(rarityScoreToTier(62)).toBe("Common");
+  });
+
+  it("maps 63 to Uncommon", () => {
+    expect(rarityScoreToTier(63)).toBe("Uncommon");
+  });
+
+  it("maps 77 to Uncommon", () => {
+    expect(rarityScoreToTier(77)).toBe("Uncommon");
+  });
+
+  it("maps 78 to Rare", () => {
+    expect(rarityScoreToTier(78)).toBe("Rare");
+  });
+
+  it("maps 89 to Rare", () => {
+    expect(rarityScoreToTier(89)).toBe("Rare");
+  });
+
+  it("maps 90 to Epic", () => {
+    expect(rarityScoreToTier(90)).toBe("Epic");
+  });
+
+  it("maps 96 to Epic", () => {
+    expect(rarityScoreToTier(96)).toBe("Epic");
+  });
+
+  it("maps 97 to Legendary", () => {
+    expect(rarityScoreToTier(97)).toBe("Legendary");
+  });
+
+  it("maps 100 to Legendary", () => {
+    expect(rarityScoreToTier(100)).toBe("Legendary");
   });
 });
