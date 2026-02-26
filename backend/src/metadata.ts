@@ -35,7 +35,7 @@ export function buildMetadata(
   return {
     name: `Crusties #${displayNumber}`,
     description:
-      "A one-of-a-kind pizza PFP based on your Farcaster vibe. Your traits are determined by 10 signals: account age, cast tone, engagement rate, topics, Neynar score, cast frequency, social presence, follower count, follower ratio, and your overall vibe.",
+      "A one-of-a-kind pizza NFT based on your Farcaster vibe. Your traits are determined by 10 signals: account age, cast tone, engagement rate, topics, Neynar score, cast frequency, social presence, follower count, follower ratio, and your overall vibe.",
     image: imageUrl,
     external_url: `https://crusties.xyz/nft/${displayNumber}`,
     attributes: [

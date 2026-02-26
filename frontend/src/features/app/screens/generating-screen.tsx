@@ -81,7 +81,7 @@ export function GeneratingScreen({ isGenerating = true, isPinning = false, image
     ? 'Permanently stored on IPFS'
     : isPinning
     ? 'Pinning to IPFS — takes ~10s'
-    : 'The AI oven is at 900°F 🔥';
+    : 'The oven is at 900°F 🔥';
 
   const totalSteps = GEN_STEPS.length + PIN_STEPS.length;
   const completedSteps = Math.min(genStep, GEN_STEPS.length) + (isPinning || pinDone ? Math.min(pinStep, PIN_STEPS.length) : 0);
@@ -124,7 +124,7 @@ export function GeneratingScreen({ isGenerating = true, isPinning = false, image
         </p>
 
         <PhaseBlock
-          title="🎨 AI Image Generation"
+          title="🎨 Image Generation"
           steps={GEN_STEPS}
           completedCount={genStep}
           isActive={isGenerating}

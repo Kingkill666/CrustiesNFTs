@@ -43,7 +43,7 @@ export function MintScreen({ onConfirm, onHome, preparing, error }: MintScreenPr
             Your Crustie Awaits
           </p>
           <p style={{ fontSize: 12, color: C.muted, margin: 0, fontWeight: 600 }}>
-            Mint first — your unique pizza PFP is revealed after 🎉
+            Mint first — your unique pizza NFT is revealed after 🎉
           </p>
         </div>
       </div>

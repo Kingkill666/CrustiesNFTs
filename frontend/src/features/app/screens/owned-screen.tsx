@@ -87,7 +87,7 @@ export function OwnedScreen({ fid, username, onMintAnother, onHome }: OwnedScree
             No Crusties Yet!
           </p>
           <p style={{ color: C.muted, fontSize: 13, fontWeight: 600, margin: 0, maxWidth: 220, lineHeight: 1.5 }}>
-            Your unique pizza PFP is waiting to be generated. Get baking!
+            Your unique pizza NFT is waiting to be generated. Get baking!
           </p>
         </div>
       )}

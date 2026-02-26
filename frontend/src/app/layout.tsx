@@ -6,9 +6,9 @@ const APP_URL = process.env.NEXT_PUBLIC_URL || "https://crusties.xyz";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: "Crusties — AI Pizza PFPs on Base",
+    title: "Crusties — Pizza NFTs on Base",
     description:
-      "Mint your unique AI-generated pizza PFP based on your Farcaster vibe. 500 supply on Base.",
+      "Mint your unique pizza NFT based on your Farcaster vibe. 500 supply on Base.",
     other: {
       "fc:miniapp": JSON.stringify({
         version: "1",

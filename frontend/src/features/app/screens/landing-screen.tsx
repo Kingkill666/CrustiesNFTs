@@ -88,7 +88,7 @@ export function LandingScreen({ onStart, onViewOwned }: { onStart: () => void; o
             letterSpacing: 3,
             margin: 0,
           }}>
-            AI PIZZA PFPS ON BASE
+            PIZZA NFTS ON BASE
           </p>
         </div>
 
@@ -338,8 +338,8 @@ export function LandingScreen({ onStart, onViewOwned }: { onStart: () => void; o
         />
         <HowStep
           emoji="🍕" color={C.red}
-          title="AI generates your Crustie"
-          desc="Your signals map to 10 unique traits. An AI bakes your one-of-a-kind pizza PFP just for you"
+          title="We generate your Crustie"
+          desc="Your signals map to 10 unique traits — baked into a one-of-a-kind pizza NFT just for you"
         />
         <HowStep
           emoji="📌" color={C.green}

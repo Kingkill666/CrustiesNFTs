@@ -161,7 +161,7 @@ export function SuccessScreen({
           }}
         >
           <p style={{ color: '#fff', fontWeight: 900, fontSize: 17, margin: 0, fontFamily: F.display, letterSpacing: 0.5 }}>
-            🖼️ Set as Farcaster PFP
+            🖼️ Set as Farcaster Profile Pic
           </p>
           <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11, margin: '3px 0 0', fontWeight: 600 }}>
             Open Warpcast settings to update
@@ -169,7 +169,7 @@ export function SuccessScreen({
         </button>
 
         <ShareButton
-          text={`just dropped the craziest ${rarity} pizza NFT on Base 🍕🔥 Crustie #${tokenId} — "${vibe}" — AI-generated from my Farcaster identity. no two are alike. mint yours 👇`}
+          text={`just dropped the craziest ${rarity} pizza NFT on Base 🍕🔥 Crustie #${tokenId} — "${vibe}" — generated from my Farcaster identity. no two are alike. mint yours 👇`}
           channelKey="pizza-party"
         >
           Share My Crustie 🍕
