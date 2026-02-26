@@ -10,10 +10,7 @@
  * iconUrl, homeUrl, splashImageUrl, etc. Base App requires these for validation.
  */
 export async function GET() {
-  const baseUrl = process.env.NEXT_PUBLIC_URL || "";
-  const canonicalDomain = baseUrl
-    ? new URL(baseUrl).hostname
-    : "";
+  const baseUrl = process.env.NEXT_PUBLIC_URL || "https://crusties-vmf-coin.vercel.app";
 
   const manifestImages = {
     logo: "https://i.postimg.cc/6phXwvyB/crustie-logo.png",
@@ -24,9 +21,9 @@ export async function GET() {
 
   return Response.json({
     accountAssociation: {
-      header: "",
-      payload: "",
-      signature: "",
+      header: "eyJmaWQiOjEwMTM0OTEsInR5cGUiOiJhdXRoIiwia2V5IjoiMHgyNTdDYmU4OTk2ODQ5NUMzYUU4QzgxQmNjQjhCRTdmMjU3Q0Q1ZjY2In0",
+      payload: "eyJkb21haW4iOiJjcnVzdGllcy12bWYtY29pbi52ZXJjZWwuYXBwIn0",
+      signature: "5hwsxrwbteaW531ZhZACYEf+KyNWFhmAFWefUXIb2/cpUKpr3+yUIpXVTSM6s/ZYD0qJDxFV/lDc+GWZt2ALehs=",
     },
     miniapp: {
       version: "1",
@@ -34,7 +31,7 @@ export async function GET() {
       iconUrl: manifestImages.logo,
       homeUrl: baseUrl,
       imageUrl: manifestImages.hero,
-      buttonTitle: baseUrl ? "🍕 Get Your Slice" : "",
+      buttonTitle: "Get Your Slice",
       splashImageUrl: manifestImages.splash,
       splashBackgroundColor: "#E63946",
       webhookUrl: "https://api.neynar.com/f/app/591d8b55-2775-4b41-80d0-888f8d18f578/event",
@@ -49,9 +46,9 @@ export async function GET() {
       ogTitle: "Crusties",
       ogDescription: "Unique pizza NFTs on Base",
       ogImageUrl: manifestImages.og,
-      castShareUrl: "",
+      castShareUrl: baseUrl,
       // Base App required fields
-      canonicalDomain,
+      canonicalDomain: new URL(baseUrl).hostname,
       requiredChains: ["eip155:8453"],
     },
   });

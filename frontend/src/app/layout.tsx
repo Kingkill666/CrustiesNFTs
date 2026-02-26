@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Providers } from "./providers";
 
-const APP_URL = process.env.NEXT_PUBLIC_URL || "https://crusties.xyz";
+const APP_URL = process.env.NEXT_PUBLIC_URL || "https://crusties-vmf-coin.vercel.app";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
