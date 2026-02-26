@@ -18,6 +18,12 @@ interface GeneratedData {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
+if (typeof window !== "undefined" && API_URL.includes("localhost")) {
+  console.warn(
+    "[Crusties] WARNING: NEXT_PUBLIC_API_URL is not set! API calls will go to localhost and fail in production. Set NEXT_PUBLIC_API_URL in Vercel env vars."
+  );
+}
+
 export function useCrusties() {
   const { address } = useAccount();
   const [generatedData, setGeneratedData] = useState<GeneratedData | null>(
@@ -74,6 +80,20 @@ export function useCrusties() {
     console.log("[Crusties] generate() called", { fid: userFid, minterAddress, API_URL });
 
     try {
+      // Guard: if we're on a deployed site but API_URL points to localhost, fail fast
+      if (
+        typeof window !== "undefined" &&
+        !window.location.hostname.includes("localhost") &&
+        API_URL.includes("localhost")
+      ) {
+        console.error(
+          "[Crusties] Cannot call localhost API from deployed site. Set NEXT_PUBLIC_API_URL env var."
+        );
+        throw new Error(
+          "Backend not configured. Set NEXT_PUBLIC_API_URL in Vercel."
+        );
+      }
+
       const url = `${API_URL}/api/generate`;
       const payload = { fid: userFid, minterAddress };
       console.log("[Crusties] POST", url, JSON.stringify(payload));

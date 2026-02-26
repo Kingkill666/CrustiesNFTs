@@ -34,8 +34,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className="min-h-screen bg-cream">
+    <html lang="en" suppressHydrationWarning>
+      <body className="min-h-screen bg-cream" suppressHydrationWarning>
         <Providers>{children}</Providers>
       </body>
     </html>

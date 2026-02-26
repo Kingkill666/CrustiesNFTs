@@ -98,8 +98,8 @@ export function MiniApp() {
             log.topics[0] ===
             '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
         );
-        if (transferLog?.topics[2]) {
-          tokenId = Number(BigInt(transferLog.topics[2]));
+        if (transferLog?.topics[3]) {
+          tokenId = Number(BigInt(transferLog.topics[3]));
         }
       } catch {
         // Non-critical
@@ -189,7 +189,11 @@ export function MiniApp() {
 
       if (!data) {
         console.error('[MiniApp] generate() returned null — backend call failed');
-        setPipeline(p => ({ ...p, error: 'Generation failed. Please try again.', preparing: false }));
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+        const hint = apiUrl.includes('localhost')
+          ? ' (Backend URL is localhost — NEXT_PUBLIC_API_URL not set in Vercel)'
+          : '';
+        setPipeline(p => ({ ...p, error: `Generation failed. Please try again.${hint}`, preparing: false }));
         return;
       }
 
