@@ -4,6 +4,7 @@ import { AppShell } from '@/features/app/components/app-shell';
 import { PrimaryBtn } from '@/features/app/components/ui-primitives';
 import { CrustieNFT } from '@/features/app/components/crustie-nft';
 import { C, F, RARITY_STYLES } from '@/features/app/components/theme';
+import { ShareButton, buildShareUrl } from '@/neynar-farcaster-sdk/mini';
 import { useOwnedCrusties } from '@/hooks/use-owned-crusties';
 
 interface OwnedScreenProps {
@@ -124,20 +125,30 @@ export function OwnedScreen({ fid, username, onMintAnother, onHome }: OwnedScree
                 </p>
               </div>
             </div>
-            {crustie.txHash && (
-              <button
-                onClick={() => window.open(`https://basescan.org/tx/${crustie.txHash}`, '_blank')}
-                style={{
-                  marginTop: 12, width: '100%', background: 'transparent',
-                  border: `1.5px solid ${r.border}`, borderRadius: 12,
-                  padding: '9px 14px', cursor: 'pointer', color: r.text,
-                  fontWeight: 800, fontSize: 12, fontFamily: F.body,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, minHeight: 44,
-                }}
-              >
-                <span>⛓️</span><span>View on BaseScan</span><span style={{ fontSize: 11 }}>↗</span>
-              </button>
-            )}
+            <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+              <div style={{ flex: 1 }}>
+                <ShareButton
+                  text={`just dropped the craziest ${crustie.rarity} pizza NFT on Base 🍕🔥 Crustie #${crustie.tokenId} — "${crustie.vibe}" — generated from my Farcaster identity. no two are alike. mint yours 👇`}
+                  embeds={[buildShareUrl({ tokenId: crustie.tokenId, imageUrl: crustie.imageUrl, vibe: crustie.vibe, rarity: crustie.rarity })]}
+                >
+                  Share 🍕
+                </ShareButton>
+              </div>
+              {crustie.txHash && (
+                <button
+                  onClick={() => window.open(`https://basescan.org/tx/${crustie.txHash}`, '_blank')}
+                  style={{
+                    flex: 1, background: 'transparent',
+                    border: `1.5px solid ${r.border}`, borderRadius: 12,
+                    padding: '9px 14px', cursor: 'pointer', color: r.text,
+                    fontWeight: 800, fontSize: 12, fontFamily: F.body,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, minHeight: 44,
+                  }}
+                >
+                  <span>⛓️</span><span>BaseScan</span><span style={{ fontSize: 11 }}>↗</span>
+                </button>
+              )}
+            </div>
           </div>
         );
       })}
