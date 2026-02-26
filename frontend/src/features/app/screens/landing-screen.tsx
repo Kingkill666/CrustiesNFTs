@@ -120,7 +120,7 @@ export function LandingScreen({ onStart, onViewOwned }: { onStart: () => void; o
           maxWidth: 280,
           fontFamily: F.body,
         }}>
-          500 unique pizza slice NFTs on Base — each one generated from your Farcaster identity
+          {total.toLocaleString()} unique pizza slice NFTs on Base — each one generated from your Farcaster identity
         </p>
       </div>
 
@@ -291,7 +291,7 @@ export function LandingScreen({ onStart, onViewOwned }: { onStart: () => void; o
       {/* ── Stats grid ────────────────────────────────────────────────────────── */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
         {[
-          { val: '500',  lbl: 'Total supply', color: C.orange, bg: C.orangeL },
+          { val: total.toLocaleString(),  lbl: 'Total supply', color: C.orange, bg: C.orangeL },
           { val: '0.001Ξ', lbl: 'or $3 USDC',   color: C.green,  bg: '#edf7f0' },
           { val: '∞',      lbl: 'per wallet',    color: C.red,    bg: '#fff0f0' },
         ].map(({ val, lbl, color, bg }) => (

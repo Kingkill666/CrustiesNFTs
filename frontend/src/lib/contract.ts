@@ -69,6 +69,13 @@ export const CRUSTIES_ABI = [
     outputs: [{ name: "", type: "uint256" }],
   },
   {
+    name: "maxSupply",
+    type: "function",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+  {
     name: "minEthPrice",
     type: "function",
     stateMutability: "view",

@@ -10,8 +10,14 @@ export function useSupply() {
     functionName: 'totalMinted',
   });
 
+  const { data: maxSupply } = useReadContract({
+    address: CRUSTIES_CONTRACT_ADDRESS,
+    abi: CRUSTIES_ABI,
+    functionName: 'maxSupply',
+  });
+
   const minted = totalMinted ? Number(totalMinted) : 0;
-  const total  = 500;
+  const total  = maxSupply ? Number(maxSupply) : 500;
 
   return { total, minted };
 }
