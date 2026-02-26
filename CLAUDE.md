@@ -37,13 +37,13 @@ USDC Mint Price:      $3 USDC (3000000, 6 decimals)
 
 ## Reference Contract (DO NOT MODIFY — for reference only)
 
-The smart contract pattern is taken directly from PizzaFriends on Base:
+The smart contract pattern is taken from a reference ERC-721 contract on Base:
 - **Address:** `0xfbEdf9D11B552c5272AaFb1ec63973CA823Bd2Ff`
 - **BaseScan:** https://basescan.org/address/0xfbEdf9D11B552c5272AaFb1ec63973CA823Bd2Ff#code
-- **Contract Name:** PizzaFriendsNFT
+- **Contract Name:** (reference implementation)
 - **Compiler:** Solidity 0.8.31, Optimizer 200 runs
 
-### What we replicate from PizzaFriends:
+### What we replicate:
 - ERC-721 + ERC721URIStorage + ERC721Royalty + Ownable pattern
 - Dual mint functions: `mintWithETH(tokenURI)` and `mintWithToken(tokenURI, amount)`
 - Per-wallet mint cap with `mintCount` mapping
@@ -52,14 +52,14 @@ The smart contract pattern is taken directly from PizzaFriends on Base:
 - Owner admin functions for price, cap, treasury, and royalty adjustments
 
 ### What we change:
-- Token name: "PizzaFriends" → "Crusties", symbol: "PIZZAFRIENDS" → "CRUSTIES"
-- Payment token: PizzaFriends' token → USDC (`0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913`, 6 decimals)
+- Token name: "Crusties", symbol: "CRUSTIES"
+- Payment token: USDC (`0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913`, 6 decimals)
 - All metadata, traits, and imagery are pizza-themed
 - Constructor parameters will use USDC address and our treasury
 
 ---
 
-## PizzaFriends Contract Source (Exact Copy for Reference)
+## Reference Contract Source (Exact Copy for Reference)
 
 ```solidity
 // SPDX-License-Identifier: MIT
@@ -71,7 +71,7 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Royalty.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract PizzaFriendsNFT is ERC721, ERC721URIStorage, ERC721Royalty, Ownable {
+contract ReferenceNFT is ERC721, ERC721URIStorage, ERC721Royalty, Ownable {
     uint256 public totalMinted;
     uint256 public maxSupply = 3333;
     uint256 public maxMintsPerWallet = 3;
@@ -90,7 +90,7 @@ contract PizzaFriendsNFT is ERC721, ERC721URIStorage, ERC721Royalty, Ownable {
         address _treasury,
         uint256 _minEthPrice,
         uint256 _minTokenPrice
-    ) ERC721("PizzaFriends", "PIZZAFRIENDS") Ownable(msg.sender) {
+    ) ERC721("Reference", "REF") Ownable(msg.sender) {
         paymentToken = IERC20(_paymentToken);
         treasury = _treasury;
         minEthPrice = _minEthPrice;
@@ -168,7 +168,7 @@ contract PizzaFriendsNFT is ERC721, ERC721URIStorage, ERC721Royalty, Ownable {
 
 When writing or modifying the CrustiesNFT contract:
 
-1. **Follow the PizzaFriends pattern exactly** — same inheritance chain, same function signatures, same access control pattern. Only change naming and the payment token address.
+1. **Follow the reference pattern exactly** — same inheritance chain, same function signatures, same access control pattern. Only change naming and the payment token address.
 2. **OpenZeppelin v5.x** — Use `@openzeppelin/contracts` v5. The constructor pattern is `Ownable(msg.sender)`, not the v4 pattern.
 3. **Compiler:** Solidity `^0.8.24` (required by OZ v5.5), compiled with solc 0.8.31, optimizer 200 runs.
 4. **Token URI is passed at mint time** — The contract does NOT generate metadata. The backend generates the image, pins to IPFS, constructs the metadata JSON, pins that to IPFS, and passes the IPFS URI as `_tokenURI` to the mint function.
@@ -182,14 +182,19 @@ When writing or modifying the CrustiesNFT contract:
 
 When building the backend API:
 
-1. **Framework:** Use TypeScript with Express or Hono. Keep it simple.
-2. **API Endpoint:** `POST /api/generate` accepts `{ fid: number }` (Farcaster ID), returns `{ ipfsUri: string, imageUrl: string, traits: object }`.
-3. **Farcaster Data:** Use the Neynar API to fetch user profile, casts, engagement stats, and social graph.
-4. **On-Chain Data:** Use Viem to read Base chain data — wallet age, tx count, token balances, NFT holdings, DeFi interactions.
-5. **Personality Engine:** Maps data points to pizza trait selections. Output is a deterministic trait object like `{ crust: "deep_dish", cheese: "extra_melty", topping: "pepperoni", eyes: "sleepy", ... }`.
-6. **AI Generation:** Use Replicate (Stable Diffusion), OpenAI (DALL·E), or a custom model. The prompt should incorporate the trait selections AND reference the base Crustie art style.
-7. **IPFS Pinning:** Use Pinata SDK or nft.storage. Pin the image first, get the CID, then construct metadata JSON with `image: "ipfs://<CID>"` and pin the metadata. Return the metadata IPFS URI.
-8. **Caching:** Cache generated images by FID to avoid re-generation. A user's Crusties should be deterministic (same input → same output) unless they explicitly request a re-roll.
+1. **Framework:** Hono (TypeScript) with `@hono/node-server`. Entry point: `backend/src/index.ts`.
+2. **API Endpoint:** `POST /api/generate` accepts `{ fid: number }` (Farcaster ID), returns `{ ipfsUri: string, imageUrl: string, traits: object }`. Route defined in `backend/src/routes/generate.ts`.
+3. **Farcaster Data:** Use the Neynar API (`backend/src/farcaster.ts`) to fetch user profile, casts, engagement stats, and social graph.
+4. **On-Chain Data:** Use Viem (`backend/src/onchain.ts`) to read Base chain data — ETH balance, tx count, USDC balance, NFT holdings, DeFi activity.
+5. **Personality Engine:** `backend/src/personality.ts` maps data points to pizza trait selections. Output is a trait object: `{ crust, cheese, topping, sauce, eyes, nose, background, accessory, vibe, rarityScore }`.
+6. **AI Generation:** `backend/src/generator.ts` uses Replicate API (Stability SDXL) at 1024x1024. Prompts incorporate trait selections for consistent style.
+7. **IPFS Pinning:** `backend/src/ipfs.ts` uses Pinata SDK (pinata-web3). Pins image first → gets CID → constructs metadata JSON with `image: "ipfs://<CID>"` → pins metadata. Returns metadata IPFS URI.
+8. **Metadata Builder:** `backend/src/metadata.ts` constructs ERC-721 standard JSON with OpenSea-compatible `attributes` array.
+9. **Caching:** In-memory cache per FID in the generate route. Same FID returns cached result unless re-roll is explicitly requested.
+
+### Backend Scripts
+
+- `backend/scripts/generate-grid.ts` — Generates 9 Crustie variations for the homepage 3x3 grid using Replicate SDXL img2img with the base Crustie drawing (`public/images/IMG_3692.jpeg`) as reference. Outputs to `frontend/public/images/grid/`. Run: `cd backend && npx tsx scripts/generate-grid.ts`. Requires `REPLICATE_API_KEY` with billing set up.
 
 ---
 
@@ -401,17 +406,74 @@ Crusties is distributed on **Base** as an NFT. To publish Crusties as a Mini App
 
 When building the frontend:
 
-1. **Framework:** Next.js (App Router) with TailwindCSS.
-2. **Wallet:** Wagmi v2 + Viem + `@farcaster/miniapp-wagmi-connector`. Configure for Base chain only. No wallet picker—Farcaster client provides the wallet in Mini App context.
-3. **Farcaster Integration:** Must work as a Farcaster Mini App. Use `@farcaster/miniapp-sdk`—call `sdk.actions.ready()` on load, use Quick Auth or signIn for identity.
-4. **Mint Flow:**
-   - User connects wallet + Farcaster identity
-   - Frontend calls backend to generate pizza → shows preview
+1. **Framework:** Next.js 14 (App Router) with TailwindCSS.
+2. **Wallet:** Wagmi v2 + Viem + `@farcaster/miniapp-wagmi-connector`. Configure for Base chain only. RainbowKit v2 with light theme (`#E85D04` accent). Farcaster client provides the wallet in Mini App context.
+3. **Farcaster Integration:** Must work as a Farcaster Mini App. Use `@farcaster/miniapp-sdk`—call `sdk.actions.ready()` on load. Use `sdk.context.user` for fid, username, pfpUrl.
+4. **Architecture:** Single-page app with a state machine in `page.tsx`. Seven screens: `splash → home → generating → preview → minting → success → error`. No client-side routing — screen switching via React state.
+5. **Mint Flow:**
+   - User taps "Get Your Slice" on Home screen
+   - Frontend calls `POST /api/generate { fid }` → shows Generating screen with progress bar
+   - Preview screen shows generated image + traits + payment selector
    - User selects payment method (ETH or USDC)
    - If USDC: call `approve()` on USDC contract first, then `mintWithToken()`
    - If ETH: call `mintWithETH()` with value
-   - Show success state with NFT image + link to BaseScan tx
-5. **Contract Interaction:** Use Wagmi `useWriteContract` / `useReadContract` hooks. Keep the ABI in `lib/contract.ts`.
+   - Minting screen shows "In The Oven..." with BaseScan link
+   - Success screen with confetti, share on Farcaster, and mint another option
+6. **Contract Interaction:** Use Wagmi `useWriteContract` / `useReadContract` / `useWaitForTransactionReceipt` hooks. ABI in `lib/contract.ts`.
+7. **IPFS Resolution:** Helper function converts `ipfs://` URIs to `https://gateway.pinata.cloud/ipfs/` for display.
+
+### Frontend Design System
+
+**Typography:**
+- Display: `Luckiest Guy` (Google Fonts) — all headings, buttons, accent text
+- Body: `Inter` (Google Fonts) — body text, labels
+- Imported in `globals.css` via Google Fonts URL
+
+**Color Tokens** (defined in `tailwind.config.ts`):
+- `orange-primary: #E85D04` — primary brand, headings, buttons, borders
+- `orange-dark: #C44900` — button hover, gradients
+- `orange-light: #FFF3E0` — light card backgrounds
+- `cream: #FFFDF7` — base page background
+- `crust-brown: #8B5E3C` — secondary/label text
+- `cheese-yellow: #FFD166` — accent highlights, trait badges, selected states
+- `tomato-red: #E63946` — error states
+- `basil-green: #2D6A4F` — success accents
+- `charcoal: #1D1D1D` — body text
+- `muted-text: #6B7280` — caption text
+
+**Component Utility Classes** (defined in `globals.css`):
+- `.crusties-card` — white bg, rounded-3xl, 4px orange-primary border, 6px offset shadow
+- `.crusties-btn` — orange-primary fill, Luckiest Guy 24px, 6px shadow, hover scale-105
+- `.crusties-btn-secondary` — semi-transparent white, backdrop-blur, white border
+
+**Animations** (Tailwind keyframes):
+- `spin-slow` — 20s rotation for background emojis
+- `float` — 3s vertical bounce + rotation for ingredient emojis
+- `confetti` — 2.5s fall + rotate + fade for success celebration
+
+**Background Pattern:**
+- Home and Preview screens use `toppings-pattern.png` as background
+- Applied at 22% opacity, `background-size: cover`, `no-repeat`, on a `#FFFBF5` base
+- Body text on light backgrounds uses color `#D42806`, `font-extrabold`, `font-display`
+
+### Frontend Screen Components
+
+| Component | File | Purpose |
+|-----------|------|---------|
+| SplashScreen | `components/SplashScreen.tsx` | 2.5s animated intro, orange gradient, bouncing pizza, loading dots |
+| HomeScreen | `components/HomeScreen.tsx` | Landing with logo, PFP avatar, 3x3 grid, stats card, CTA button |
+| GeneratingScreen | `components/GeneratingScreen.tsx` | Spinning pizza, rotating puns, progress bar (0-95%) |
+| PreviewScreen | `components/PreviewScreen.tsx` | NFT preview, traits grid, ETH/USDC payment selector, mint button, re-roll |
+| MintingScreen | `components/MintingScreen.tsx` | Tx confirmation loading, NFT with spinner overlay, BaseScan link |
+| SuccessScreen | `components/SuccessScreen.tsx` | Confetti, glowing NFT, share on Farcaster, mint another |
+| ErrorScreen | `components/ErrorScreen.tsx` | Burnt pizza visual, retry + back home buttons |
+
+### Frontend Hooks
+
+| Hook | File | Purpose |
+|------|------|---------|
+| useCrusties | `hooks/useCrusties.ts` | Backend generate calls, contract reads (totalMinted, remainingMints, minEthPrice, minTokenPrice) |
+| useFarcasterContext | `hooks/useFarcasterContext.ts` | Extracts fid, username, pfpUrl, isInMiniApp from `sdk.context` |
 
 ---
 
@@ -477,20 +539,21 @@ Env vars:      SCREAMING_SNAKE_CASE    (PINATA_API_KEY, BASE_RPC_URL)
 
 ## Deployment Checklist
 
-- [ ] Sign manifest: use [Farcaster Manifest Tool](https://farcaster.xyz/~/developers/mini-apps/manifest) or [Base Build Account association](https://www.base.dev/preview?tab=account), then update `accountAssociation` in `public/.well-known/farcaster.json`
+- [ ] Add Replicate billing and generate 9 homepage grid images (`cd backend && npx tsx scripts/generate-grid.ts`)
+- [ ] Add public assets: `og-image.png`, `icon.png`, `splash.png`, screenshot images
+- [ ] Sign manifest: use [Farcaster Manifest Tool](https://farcaster.xyz/~/developers/mini-apps/manifest) or [Base Build Account association](https://www.base.dev/preview?tab=account), then update `accountAssociation` in the manifest route
 - [ ] Deploy CrustiesNFT to Base Sepolia with test parameters
 - [ ] Verify contract on BaseScan (Sepolia)
 - [ ] Test mint with ETH on testnet
 - [ ] Test mint with USDC on testnet
 - [ ] Deploy backend to staging
-- [ ] Test full flow: generate → pin → mint on testnet
+- [ ] Test full flow: splash → generate → preview → mint on testnet
 - [ ] Deploy CrustiesNFT to Base Mainnet
 - [ ] Verify contract on BaseScan (Mainnet)
-- [ ] Set production mint prices
-- [ ] Deploy backend to production
-- [ ] Deploy frontend to Vercel
+- [ ] Set production mint prices and treasury address
+- [ ] Deploy backend + frontend to production (Vercel)
 - [ ] Test mainnet flow end-to-end
-- [ ] Launch
+- [ ] Publish on Farcaster + Base app
 
 ---
 
@@ -513,19 +576,22 @@ Env vars:      SCREAMING_SNAKE_CASE    (PINATA_API_KEY, BASE_RPC_URL)
     "@openzeppelin/contracts": "^5.0.0"
   },
   "backend": {
-    "express": "^4.18 or hono ^4.0",
-    "viem": "^2.0",
-    "@neynar/nodejs-sdk": "latest",
-    "pinata-web3": "latest",
-    "replicate": "latest"
+    "hono": "^4.6.0",
+    "@hono/node-server": "^1.13.0",
+    "viem": "^2.21.0",
+    "pinata-web3": "^0.5.0",
+    "replicate": "^1.0.0",
+    "dotenv": "^17.3.1"
   },
   "frontend": {
-    "next": "^14",
-    "wagmi": "^2.0",
-    "viem": "^2.0",
-    "@farcaster/miniapp-sdk": "latest",
-    "@farcaster/miniapp-wagmi-connector": "latest",
-    "@rainbow-me/rainbowkit": "^2.0",
+    "next": "^14.2.0",
+    "react": "^18.3.0",
+    "wagmi": "^2.14.0",
+    "viem": "^2.21.0",
+    "@farcaster/miniapp-sdk": "^0.2.3",
+    "@farcaster/miniapp-wagmi-connector": "^1.1.1",
+    "@rainbow-me/rainbowkit": "^2.2.0",
+    "@tanstack/react-query": "^5.60.0",
     "tailwindcss": "^3.4"
   }
 }
@@ -548,8 +614,17 @@ forge script script/Deploy.s.sol --rpc-url base-sepolia --broadcast --verify
 # Start backend dev server
 cd backend && npm run dev
 
+# Run backend tests
+cd backend && npm test
+
 # Start frontend dev server
 cd frontend && npm run dev
+
+# Build frontend (check for TypeScript/build errors)
+cd frontend && npm run build
+
+# Generate 9 homepage grid images (requires REPLICATE_API_KEY with billing)
+cd backend && npx tsx scripts/generate-grid.ts
 
 # Verify manifest is served (replace with your domain)
 curl -s https://crusties.xyz/.well-known/farcaster.json | jq .

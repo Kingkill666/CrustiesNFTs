@@ -20,5 +20,5 @@ export async function pinToIPFS(
   });
 
   const result = await pinata.upload.file(file);
-  return result.IpfsCidV0 ?? result.IpfsCidV1 ?? result.id;
+  return result.IpfsHash;
 }

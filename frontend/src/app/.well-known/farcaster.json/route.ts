@@ -1,5 +1,26 @@
+/**
+ * Farcaster + Base App Mini App Manifest
+ *
+ * Same manifest works for both platforms. Both read from /.well-known/farcaster.json
+ *
+ * Farcaster: Sign via https://farcaster.xyz/~/developers/mini-apps/manifest
+ * Base App:  Sign via https://www.base.dev/preview?tab=account
+ *
+ * Set NEXT_PUBLIC_URL (e.g. https://crusties.xyz) when deployed to populate
+ * iconUrl, homeUrl, splashImageUrl, etc. Base App requires these for validation.
+ */
 export async function GET() {
-  const URL = process.env.NEXT_PUBLIC_URL || "https://crusties.xyz";
+  const baseUrl = process.env.NEXT_PUBLIC_URL || "";
+  const canonicalDomain = baseUrl
+    ? new URL(baseUrl).hostname
+    : "";
+
+  const manifestImages = {
+    logo: "https://i.postimg.cc/6phXwvyB/crustie-logo.png",
+    splash: "https://i.postimg.cc/15kxDKNz/app_splash.png",
+    hero: "https://i.postimg.cc/pV1MLvW5/app_hero.png",
+    og: "https://i.postimg.cc/pV1MLvW5/app_hero.png",
+  };
 
   return Response.json({
     accountAssociation: {
@@ -10,28 +31,28 @@ export async function GET() {
     miniapp: {
       version: "1",
       name: "Crusties",
-      homeUrl: URL,
-      iconUrl: `${URL}/icon.png`,
-      splashImageUrl: `${URL}/splash.png`,
-      splashBackgroundColor: "#E85D04",
-      webhookUrl: `${URL}/api/webhook`,
+      iconUrl: manifestImages.logo,
+      homeUrl: baseUrl,
+      imageUrl: manifestImages.hero,
+      buttonTitle: baseUrl ? "🍕 Get Your Slice" : "",
+      splashImageUrl: manifestImages.splash,
+      splashBackgroundColor: "#E63946",
+      webhookUrl: "https://api.neynar.com/f/app/591d8b55-2775-4b41-80d0-888f8d18f578/event",
       subtitle: "AI Pizza PFPs on Base",
       description:
-        "Mint a unique AI-generated pizza PFP based on your Farcaster vibe. 3,333 supply on Base. Pay with ETH or USDC.",
-      screenshotUrls: [
-        `${URL}/screenshots/mint.png`,
-        `${URL}/screenshots/preview.png`,
-        `${URL}/screenshots/collection.png`,
-      ],
+        "Crusties are 3,333 AI-generated pizza slice NFTs on Base. Connect your Farcaster identity and get a unique pizza character minted to your wallet. Your vibe, baked in.",
+      screenshotUrls: [],
       primaryCategory: "social",
-      tags: ["nft", "pizza", "pfp", "base", "ai"],
-      heroImageUrl: `${URL}/og.png`,
-      tagline: "Your vibe, baked into a pizza",
-      ogTitle: "Crusties — AI Pizza PFPs on Base",
-      ogDescription:
-        "Mint a unique AI-generated pizza PFP based on your Farcaster vibe.",
-      ogImageUrl: `${URL}/og.png`,
-      noindex: false,
+      tags: ["nft", "pizza", "ai", "farcaster", "base"],
+      heroImageUrl: manifestImages.hero,
+      tagline: "Your vibe, baked in.",
+      ogTitle: "Crusties",
+      ogDescription: "AI-generated pizza PFP NFTs on Base",
+      ogImageUrl: manifestImages.og,
+      castShareUrl: "",
+      // Base App required fields
+      canonicalDomain,
+      requiredChains: ["eip155:8453"],
     },
   });
 }

@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { sdk } from "@farcaster/miniapp-sdk";
 import { useAccount } from "wagmi";
 import { useCrusties } from "@/hooks/useCrusties";
+import { CRUSTIES_CONTRACT_ADDRESS } from "@/lib/contract";
 import { useFarcasterContext } from "@/hooks/useFarcasterContext";
 
 import { SplashScreen } from "@/components/SplashScreen";
@@ -13,6 +15,7 @@ import { PreviewScreen } from "@/components/PreviewScreen";
 import { MintingScreen } from "@/components/MintingScreen";
 import { SuccessScreen } from "@/components/SuccessScreen";
 import { ErrorScreen } from "@/components/ErrorScreen";
+import { YourCrustiesScreen } from "@/components/YourCrustiesScreen";
 
 type Screen =
   | "splash"
@@ -21,21 +24,25 @@ type Screen =
   | "preview"
   | "minting"
   | "success"
-  | "error";
+  | "error"
+  | "yourCrusties";
 
 export default function Home() {
   const [screen, setScreen] = useState<Screen>("splash");
   const [txHash, setTxHash] = useState<string>("");
+  const [tokenId, setTokenId] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string>("");
 
+  const queryClient = useQueryClient();
   const { address, isConnected } = useAccount();
-  const { fid, username, isInMiniApp } = useFarcasterContext();
+  const { fid, username, pfpUrl, isInMiniApp } = useFarcasterContext();
   const {
     generatedData,
     isGenerating,
     generate,
     remainingMints,
     totalMinted,
+    remainingSupply,
   } = useCrusties();
 
   // Signal to Farcaster client that the app is ready
@@ -56,27 +63,46 @@ export default function Home() {
 
   const handleGetSlice = useCallback(() => {
     setScreen("generating");
-    generate(fid ?? undefined);
-  }, [fid, generate]);
+    generate(fid ?? undefined, address);
+  }, [fid, address, generate]);
 
   const handleBackToHome = useCallback(() => {
     setScreen("home");
   }, []);
 
-  const handleReroll = useCallback(() => {
-    setScreen("generating");
-    generate(fid ?? undefined);
-  }, [fid, generate]);
+  const handleOpenYourCrusties = useCallback(() => {
+    setScreen("yourCrusties");
+  }, []);
 
   const handleMintStarted = useCallback((hash: string) => {
     setTxHash(hash);
     setScreen("minting");
   }, []);
 
-  const handleMintSuccess = useCallback((hash: string) => {
-    setTxHash(hash);
-    setScreen("success");
-  }, []);
+  const handleMintSuccess = useCallback(
+    (hash: string, id: string) => {
+      setTxHash(hash);
+      setTokenId(id);
+      setScreen("success");
+      // Refetch contract data so progress bar and Your Crusties update
+      queryClient.invalidateQueries({
+        predicate: (query) => {
+          const key = query.queryKey as unknown[];
+          const type = key[0];
+          if (type === "readContract") {
+            const opts = key[1] as { address?: string };
+            return opts?.address === CRUSTIES_CONTRACT_ADDRESS;
+          }
+          if (type === "readContracts") {
+            const contracts = key[1] as Array<{ address?: string }>;
+            return contracts?.some((c) => c?.address === CRUSTIES_CONTRACT_ADDRESS);
+          }
+          return false;
+        },
+      });
+    },
+    [queryClient]
+  );
 
   const handleMintError = useCallback((error: string) => {
     setErrorMessage(error);
@@ -85,14 +111,15 @@ export default function Home() {
 
   const handleMintAnother = useCallback(() => {
     setScreen("generating");
-    generate(fid ?? undefined);
-  }, [fid, generate]);
+    generate(fid ?? undefined, address);
+  }, [fid, address, generate]);
 
   const handleRetry = useCallback(() => {
     setScreen("preview");
   }, []);
 
-  const userMintCount = remainingMints !== undefined ? BigInt(3) - remainingMints : undefined;
+  const userMintCount =
+    remainingMints !== undefined ? BigInt(3) - remainingMints : undefined;
   const remaining = remainingMints ? Number(remainingMints) : 0;
 
   return (
@@ -110,10 +137,22 @@ export default function Home() {
       {screen === "home" && (
         <HomeScreen
           totalMinted={totalMinted as bigint | undefined}
+          remainingSupply={remainingSupply as bigint | undefined}
           userMintCount={userMintCount}
           isConnected={isConnected}
           username={username}
+          pfpUrl={pfpUrl}
           onGetSlice={handleGetSlice}
+          onOpenYourCrusties={handleOpenYourCrusties}
+        />
+      )}
+
+      {screen === "yourCrusties" && (
+        <YourCrustiesScreen
+          isConnected={isConnected}
+          pfpUrl={pfpUrl}
+          onMintAnother={handleGetSlice}
+          onBack={handleBackToHome}
         />
       )}
 
@@ -126,8 +165,8 @@ export default function Home() {
           imageUrl={generatedData.imageUrl}
           ipfsUri={generatedData.ipfsUri}
           traits={generatedData.traits}
+          signature={generatedData.signature}
           onBack={handleBackToHome}
-          onReroll={handleReroll}
           onMintStarted={handleMintStarted}
           onMintSuccess={handleMintSuccess}
           onMintError={handleMintError}
@@ -135,16 +174,14 @@ export default function Home() {
       )}
 
       {screen === "minting" && generatedData && (
-        <MintingScreen
-          imageUrl={generatedData.imageUrl}
-          txHash={txHash}
-        />
+        <MintingScreen imageUrl={generatedData.imageUrl} txHash={txHash} />
       )}
 
       {screen === "success" && generatedData && (
         <SuccessScreen
           imageUrl={generatedData.imageUrl}
           txHash={txHash}
+          tokenId={tokenId}
           remainingMints={remaining}
           onMintAnother={handleMintAnother}
         />

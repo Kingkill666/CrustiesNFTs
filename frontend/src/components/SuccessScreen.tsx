@@ -39,7 +39,8 @@ export function SuccessScreen({
 
   return (
     <div className="w-full max-w-[480px] mx-auto min-h-screen">
-      <div className="min-h-screen bg-gradient-to-br from-orange-primary via-orange-dark to-crust-brown relative overflow-hidden">
+      <div className="min-h-screen flex flex-col bg-gradient-to-br from-orange-primary via-orange-dark to-crust-brown relative overflow-hidden">
+        <AppHeader variant="dark" />
         {/* Confetti Animation */}
         {showConfetti && (
           <div className="absolute inset-0 pointer-events-none z-10">
@@ -99,11 +100,11 @@ export function SuccessScreen({
           <div className="text-center mb-8">
             <h1
               className="text-white mb-4 font-display"
-              style={{ fontSize: "52px", textShadow: "4px 4px 0px rgba(0,0,0,0.2)" }}
+              style={{ fontSize: "52px" }}
             >
               You&apos;re a Crustie!
             </h1>
-            <p className="text-white text-xl font-medium mb-5 font-body">
+            <p className="text-white text-xl font-extrabold mb-5 font-display">
               You&apos;re officially a slice of the collection.
             </p>
             {tokenId && (
@@ -153,7 +154,7 @@ export function SuccessScreen({
               >
                 🍕 Mint Another Slice
               </button>
-              <p className="text-white text-lg font-medium font-body">
+              <p className="text-white text-lg font-extrabold font-display">
                 You have {remainingMints}/3 mints left
               </p>
             </div>

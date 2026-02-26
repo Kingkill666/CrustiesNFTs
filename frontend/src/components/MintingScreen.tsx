@@ -57,11 +57,11 @@ export function MintingScreen({ imageUrl, txHash }: MintingScreenProps) {
         <div className="text-center mb-10 max-w-md z-10">
           <h1
             className="text-white mb-5 font-display"
-            style={{ fontSize: "48px", textShadow: "4px 4px 0px rgba(0,0,0,0.2)" }}
+            style={{ fontSize: "48px" }}
           >
             In The Oven...
           </h1>
-          <p className="text-white text-xl leading-relaxed font-medium font-body">
+          <p className="text-white text-xl leading-relaxed font-extrabold font-display">
             Your transaction is being confirmed on Base. This won&apos;t take long!
           </p>
         </div>

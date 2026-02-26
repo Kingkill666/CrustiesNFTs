@@ -28,11 +28,11 @@ export function ErrorScreen({ errorMessage, onRetry, onBackHome }: ErrorScreenPr
         <div className="text-center mb-10 max-w-md">
           <h1
             className="text-white mb-5 font-display"
-            style={{ fontSize: "44px", textShadow: "4px 4px 0px rgba(0,0,0,0.2)" }}
+            style={{ fontSize: "44px" }}
           >
             That Crust Crumbled
           </h1>
-          <p className="text-white text-xl leading-relaxed font-medium font-body">
+          <p className="text-white text-xl leading-relaxed font-extrabold font-display">
             {errorMessage}
           </p>
         </div>
@@ -62,7 +62,7 @@ export function ErrorScreen({ errorMessage, onRetry, onBackHome }: ErrorScreenPr
         </div>
 
         {/* Encouraging Message */}
-        <p className="text-white text-center text-lg max-w-sm font-medium font-body">
+        <p className="text-white text-center text-lg max-w-sm font-extrabold font-display">
           Don&apos;t worry! Even the best pizzas sometimes need a second try. 🍕
         </p>
       </div>

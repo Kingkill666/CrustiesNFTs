@@ -6,6 +6,7 @@ import { sdk } from "@farcaster/miniapp-sdk";
 interface FarcasterContext {
   fid: number | null;
   username: string | null;
+  pfpUrl: string | null;
   isInMiniApp: boolean;
   location: string | null;
   isAdded: boolean;
@@ -15,6 +16,7 @@ export function useFarcasterContext(): FarcasterContext {
   const [context, setContext] = useState<FarcasterContext>({
     fid: null,
     username: null,
+    pfpUrl: null,
     isInMiniApp: false,
     location: null,
     isAdded: false,
@@ -29,6 +31,7 @@ export function useFarcasterContext(): FarcasterContext {
           setContext({
             fid: ctx.user.fid,
             username: ctx.user.username ?? null,
+            pfpUrl: ctx.user.pfpUrl ?? null,
             isInMiniApp: true,
             location: ctx.location?.type ?? null,
             isAdded: ctx.client?.added ?? false,

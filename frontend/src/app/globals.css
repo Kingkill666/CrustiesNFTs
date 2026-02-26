@@ -4,6 +4,16 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Global outline for ALL Luckiest Guy text — headings, buttons, font-display, inline styles */
+h1, h2, h3,
+.font-display,
+.crusties-btn,
+.crusties-btn-secondary,
+[style*="Luckiest Guy"] {
+  -webkit-text-stroke: 1px rgba(0, 0, 0, 0.6);
+  paint-order: stroke fill;
+}
+
 @layer base {
   body {
     background-color: #FFFDF7;

@@ -39,8 +39,10 @@ export async function fetchFarcasterUser(fid: number): Promise<FarcasterUser> {
     throw new Error(`Neynar user fetch failed: ${userRes.status}`);
   }
 
-  const userData = await userRes.json();
-  const user = userData.users?.[0];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const userData = await userRes.json() as any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const user = userData.users?.[0] as any;
 
   if (!user) {
     throw new Error(`User with FID ${fid} not found`);
@@ -54,31 +56,28 @@ export async function fetchFarcasterUser(fid: number): Promise<FarcasterUser> {
 
   let recentCasts: CastData[] = [];
   if (castsRes.ok) {
-    const castsData = await castsRes.json();
-    recentCasts = (castsData.casts || []).map(
-      (cast: Record<string, unknown>) => ({
-        text: cast.text as string,
-        timestamp: cast.timestamp as string,
-        likes: ((cast.reactions as Record<string, unknown[]>)?.likes || [])
-          .length,
-        recasts: (
-          (cast.reactions as Record<string, unknown[]>)?.recasts || []
-        ).length,
-        replies: (cast.replies as Record<string, number>)?.count || 0,
-      })
-    );
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const castsData = await castsRes.json() as any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    recentCasts = (castsData.casts || []).map((cast: any) => ({
+      text: cast.text as string,
+      timestamp: cast.timestamp as string,
+      likes: (cast.reactions?.likes || []).length as number,
+      recasts: (cast.reactions?.recasts || []).length as number,
+      replies: (cast.replies?.count || 0) as number,
+    }));
   }
 
   const verifiedAddresses: string[] =
     user.verified_addresses?.eth_addresses || [];
 
   return {
-    fid: user.fid,
-    username: user.username,
-    displayName: user.display_name,
-    bio: user.profile?.bio?.text || "",
-    followerCount: user.follower_count || 0,
-    followingCount: user.following_count || 0,
+    fid: user.fid as number,
+    username: user.username as string,
+    displayName: user.display_name as string,
+    bio: (user.profile?.bio?.text || "") as string,
+    followerCount: (user.follower_count || 0) as number,
+    followingCount: (user.following_count || 0) as number,
     verifiedAddresses,
     castCount: recentCasts.length,
     recastCount: recentCasts.reduce(

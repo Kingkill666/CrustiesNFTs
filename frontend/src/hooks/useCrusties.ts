@@ -10,7 +10,10 @@ import {
 interface GeneratedData {
   ipfsUri: string;
   imageUrl: string;
-  traits: Record<string, string>;
+  traits: Record<string, string | number>;
+  crustieIndex?: number;
+  signature?: string;
+  nonce?: string;
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
@@ -34,14 +37,20 @@ export function useCrusties() {
     address: CRUSTIES_CONTRACT_ADDRESS,
     abi: CRUSTIES_ABI,
     functionName: "remainingSupply",
-    query: { enabled: CRUSTIES_CONTRACT_ADDRESS !== "0x" },
+    query: {
+      enabled: CRUSTIES_CONTRACT_ADDRESS !== "0x",
+      refetchInterval: 15000, // Poll every 15s so progress bar updates as others mint
+    },
   });
 
   const { data: totalMinted } = useReadContract({
     address: CRUSTIES_CONTRACT_ADDRESS,
     abi: CRUSTIES_ABI,
     functionName: "totalMinted",
-    query: { enabled: CRUSTIES_CONTRACT_ADDRESS !== "0x" },
+    query: {
+      enabled: CRUSTIES_CONTRACT_ADDRESS !== "0x",
+      refetchInterval: 15000, // Poll every 15s so progress bar updates as others mint
+    },
   });
 
   const { data: minEthPrice } = useReadContract({
@@ -58,14 +67,14 @@ export function useCrusties() {
     query: { enabled: CRUSTIES_CONTRACT_ADDRESS !== "0x" },
   });
 
-  const generate = useCallback(async (fid?: number) => {
+  const generate = useCallback(async (fid?: number, minterAddress?: string) => {
     const userFid = fid ?? 1; // Falls back to 1 for testing outside Farcaster
     setIsGenerating(true);
     try {
       const res = await fetch(`${API_URL}/api/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fid: userFid }),
+        body: JSON.stringify({ fid: userFid, minterAddress }),
       });
 
       if (!res.ok) throw new Error("Generation failed");

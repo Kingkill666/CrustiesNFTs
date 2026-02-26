@@ -13,7 +13,9 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
   }, [onComplete]);
 
   return (
-    <div className="h-screen w-full flex items-center justify-center bg-gradient-to-br from-orange-primary via-orange-dark to-crust-brown overflow-hidden relative">
+    <div className="h-screen w-full flex flex-col bg-gradient-to-br from-orange-primary via-orange-dark to-crust-brown overflow-hidden relative">
+      <AppHeader variant="dark" />
+      <div className="flex-1 flex items-center justify-center relative">
       {/* Animated background elements */}
       <div className="absolute inset-0 opacity-10">
         <div className="absolute top-10 left-10 text-6xl animate-spin-slow">🍕</div>
@@ -49,11 +51,11 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
         {/* Brand Name */}
         <h1
           className="text-white mb-3 font-display"
-          style={{ fontSize: "56px", textShadow: "4px 4px 0px rgba(0,0,0,0.2)" }}
+          style={{ fontSize: "56px" }}
         >
           Crusties
         </h1>
-        <p className="text-white text-xl font-medium font-body">
+        <p className="text-white text-xl font-extrabold font-display">
           Baking your Crustie...
         </p>
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { AppHeader } from "./AppHeader";
 
 const pizzaPuns = [
   "Analyzing your on-chain flavor profile...",
@@ -62,21 +63,7 @@ export function GeneratingScreen({ onBack }: GeneratingScreenProps) {
           </div>
         </div>
 
-        {/* Header */}
-        <header className="px-5 py-5 flex items-center justify-between relative z-10">
-          <button
-            onClick={onBack}
-            className="flex items-center gap-2 text-white hover:text-cheese-yellow transition-colors"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          <h2 className="text-white font-display" style={{ fontSize: "32px" }}>
-            Baking...
-          </h2>
-          <div className="w-8" />
-        </header>
+        <AppHeader showBack onBack={onBack} title="Baking..." variant="dark" />
 
         {/* Main Content */}
         <div className="flex-1 flex flex-col items-center justify-center px-6 pb-20 relative z-10">
@@ -106,11 +93,11 @@ export function GeneratingScreen({ onBack }: GeneratingScreenProps) {
           <div className="text-center max-w-md mb-10">
             <h1
               className="text-white mb-5 font-display"
-              style={{ fontSize: "44px", textShadow: "4px 4px 0px rgba(0,0,0,0.2)" }}
+              style={{ fontSize: "44px" }}
             >
               Baking Your Crustie...
             </h1>
-            <p className="text-white text-lg transition-opacity duration-500 min-h-[56px] font-medium font-body">
+            <p className="text-white text-lg transition-opacity duration-500 min-h-[56px] font-extrabold font-display">
               {pizzaPuns[punIndex]}
             </p>
           </div>

@@ -9,7 +9,10 @@ export const CRUSTIES_ABI = [
     name: "mintWithETH",
     type: "function",
     stateMutability: "payable",
-    inputs: [{ name: "_tokenURI", type: "string" }],
+    inputs: [
+      { name: "_tokenURI", type: "string" },
+      { name: "signature", type: "bytes" },
+    ],
     outputs: [{ name: "", type: "uint256" }],
   },
   {
@@ -19,8 +22,23 @@ export const CRUSTIES_ABI = [
     inputs: [
       { name: "_tokenURI", type: "string" },
       { name: "tokenAmount", type: "uint256" },
+      { name: "signature", type: "bytes" },
     ],
     outputs: [{ name: "", type: "uint256" }],
+  },
+  {
+    name: "nonces",
+    type: "function",
+    stateMutability: "view",
+    inputs: [{ name: "owner", type: "address" }],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+  {
+    name: "paused",
+    type: "function",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "bool" }],
   },
   {
     name: "canMint",
@@ -70,6 +88,30 @@ export const CRUSTIES_ABI = [
     stateMutability: "view",
     inputs: [{ name: "", type: "address" }],
     outputs: [{ name: "", type: "uint256" }],
+  },
+  {
+    name: "balanceOf",
+    type: "function",
+    stateMutability: "view",
+    inputs: [{ name: "owner", type: "address" }],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+  {
+    name: "tokenOfOwnerByIndex",
+    type: "function",
+    stateMutability: "view",
+    inputs: [
+      { name: "owner", type: "address" },
+      { name: "index", type: "uint256" },
+    ],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+  {
+    name: "tokenURI",
+    type: "function",
+    stateMutability: "view",
+    inputs: [{ name: "tokenId", type: "uint256" }],
+    outputs: [{ name: "", type: "string" }],
   },
 ] as const;
 
