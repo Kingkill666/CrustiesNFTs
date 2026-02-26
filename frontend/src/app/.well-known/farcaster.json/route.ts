@@ -29,7 +29,7 @@ export async function GET() {
       version: "1",
       name: "Crusties",
       iconUrl: manifestImages.logo,
-      homeUrl: baseUrl,
+      homeUrl: "https://crusties-vmf-coin.vercel.app/",
       imageUrl: manifestImages.hero,
       buttonTitle: "Get Your Crustie Now",
       splashImageUrl: manifestImages.splash,
@@ -46,9 +46,9 @@ export async function GET() {
       ogTitle: "Crusties",
       ogDescription: "Unique pizza NFTs on Base",
       ogImageUrl: manifestImages.og,
-      castShareUrl: baseUrl,
+      castShareUrl: "https://crusties-vmf-coin.vercel.app/",
       // Base App required fields
-      canonicalDomain: new URL(baseUrl).hostname,
+      canonicalDomain: "crusties-vmf-coin.vercel.app",
       requiredChains: ["eip155:8453"],
     },
   });
