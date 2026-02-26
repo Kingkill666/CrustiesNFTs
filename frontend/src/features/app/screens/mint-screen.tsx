@@ -36,7 +36,7 @@ export function MintScreen({ onConfirm, onHome, preparing, error }: MintScreenPr
           boxShadow: `0 6px 0 ${C.orangeD}20`,
           animation: 'float-pizza 3.5s ease-in-out infinite',
         }}>
-          🍕
+          ❓
         </div>
         <div style={{ textAlign: 'center' }}>
           <p style={{ fontFamily: F.display, fontSize: 20, color: C.orangeD, margin: '0 0 4px', letterSpacing: 1 }}>

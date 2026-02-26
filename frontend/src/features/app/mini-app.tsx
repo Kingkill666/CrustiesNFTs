@@ -178,6 +178,8 @@ export function MiniApp() {
         imageUrl: data.imageUrl,
         tokenURI: uri,
         signature: sig,
+        vibe: data.traits?.vibe as string | undefined,
+        rarity: data.traits?.rarity as PipelineState['rarity'],
       }));
 
       if (!sig) {

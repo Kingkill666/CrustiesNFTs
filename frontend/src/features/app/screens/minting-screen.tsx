@@ -90,7 +90,7 @@ export function MintingScreen({ payment, tokenURI, onHome, isMintPending, mintEr
           filter: isError ? undefined : `drop-shadow(0 8px 24px ${C.orange}50)`,
           lineHeight: 1,
         }}>
-          {isError ? '😬' : '🍕'}
+          {isError ? '😬' : '❓'}
         </div>
 
         <div style={{ textAlign: 'center' }}>

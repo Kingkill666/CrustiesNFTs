@@ -70,9 +70,15 @@ generateRoute.post("/generate", async (c) => {
       nonce = currentNonce.toString();
     }
 
+    // Convert ipfs:// URI to gateway URL for frontend display
+    const imageGatewayUrl = prePinned.imageUri.replace(
+      "ipfs://",
+      "https://gateway.pinata.cloud/ipfs/"
+    );
+
     return c.json({
       ipfsUri: prePinned.metadataUri,
-      imageUrl: prePinned.imageUri,
+      imageUrl: imageGatewayUrl,
       traits,
       crustieIndex,
       signature,
