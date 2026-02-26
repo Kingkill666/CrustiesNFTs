@@ -1,1 +1,10 @@
-{"fidToIndex":{},"claimedIndices":[]}
+{
+  "fidToIndex": {
+    "12345": 162,
+    "999999": 231
+  },
+  "claimedIndices": [
+    231,
+    162
+  ]
+}

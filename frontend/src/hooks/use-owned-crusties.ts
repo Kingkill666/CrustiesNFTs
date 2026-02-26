@@ -12,6 +12,23 @@ function ipfsToHttp(uri: string): string {
   return uri;
 }
 
+const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
+
+/** Retry an async fn up to `retries` times with exponential backoff */
+async function withRetry<T>(fn: () => Promise<T>, retries = 3, baseDelay = 1000): Promise<T> {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      if (attempt === retries) throw err;
+      const delay = baseDelay * Math.pow(2, attempt);
+      console.log(`[withRetry] Attempt ${attempt + 1} failed, retrying in ${delay}ms...`);
+      await wait(delay);
+    }
+  }
+  throw new Error('unreachable');
+}
+
 export function useOwnedCrusties(_fid?: number) {
   const { address } = useAccount();
   const publicClient = usePublicClient();
@@ -31,12 +48,14 @@ export function useOwnedCrusties(_fid?: number) {
       setIsLoading(true);
       try {
         // 1. Get balance (number of NFTs owned)
-        const balance = await publicClient!.readContract({
-          address: CRUSTIES_CONTRACT_ADDRESS,
-          abi: CRUSTIES_ABI,
-          functionName: 'balanceOf',
-          args: [address!],
-        });
+        const balance = await withRetry(() =>
+          publicClient!.readContract({
+            address: CRUSTIES_CONTRACT_ADDRESS,
+            abi: CRUSTIES_ABI,
+            functionName: 'balanceOf',
+            args: [address!],
+          })
+        );
 
         const count = Number(balance);
         console.log('[useOwnedCrusties] balanceOf:', count);
@@ -52,12 +71,14 @@ export function useOwnedCrusties(_fid?: number) {
         // 2. Get each token ID via tokenOfOwnerByIndex (ERC721Enumerable)
         const tokenIds: bigint[] = [];
         for (let i = 0; i < count; i++) {
-          const tokenId = await publicClient!.readContract({
-            address: CRUSTIES_CONTRACT_ADDRESS,
-            abi: CRUSTIES_ABI,
-            functionName: 'tokenOfOwnerByIndex',
-            args: [address!, BigInt(i)],
-          });
+          const tokenId = await withRetry(() =>
+            publicClient!.readContract({
+              address: CRUSTIES_CONTRACT_ADDRESS,
+              abi: CRUSTIES_ABI,
+              functionName: 'tokenOfOwnerByIndex',
+              args: [address!, BigInt(i)],
+            })
+          );
           tokenIds.push(tokenId as bigint);
         }
 
@@ -68,12 +89,14 @@ export function useOwnedCrusties(_fid?: number) {
 
         for (const tokenId of tokenIds) {
           try {
-            const uri = await publicClient!.readContract({
-              address: CRUSTIES_CONTRACT_ADDRESS,
-              abi: CRUSTIES_ABI,
-              functionName: 'tokenURI',
-              args: [tokenId],
-            }) as string;
+            const uri = await withRetry(() =>
+              publicClient!.readContract({
+                address: CRUSTIES_CONTRACT_ADDRESS,
+                abi: CRUSTIES_ABI,
+                functionName: 'tokenURI',
+                args: [tokenId],
+              })
+            ) as string;
 
             console.log('[useOwnedCrusties] tokenURI for', Number(tokenId), ':', uri);
 

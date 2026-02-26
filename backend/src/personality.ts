@@ -197,19 +197,20 @@ export function computeTraits(
     topping = pick(TOPPINGS, rand);
   }
 
-  // ── 5. Eyes ← Neynar score proxy (follower count tier) ───────────────────
+  // ── 5. Eyes ← Neynar score (0–1 range from Neynar API) ───────────────────
   // EYES = ["wide_open", "sleepy", "laser", "heart", "pizza_eyes"]
+  const neynarScore = user.neynarScore;
   let eyes: string;
-  if (user.followerCount >= 10000) {
-    eyes = EYES[2]; // laser — big account
-  } else if (user.followerCount >= 2000) {
-    eyes = EYES[3]; // heart
-  } else if (user.followerCount >= 500) {
-    eyes = EYES[0]; // wide_open
-  } else if (user.followerCount >= 100) {
-    eyes = EYES[4]; // pizza_eyes
+  if (neynarScore >= 0.9) {
+    eyes = EYES[2]; // laser — top-tier Neynar score
+  } else if (neynarScore >= 0.7) {
+    eyes = EYES[3]; // heart — strong score
+  } else if (neynarScore >= 0.5) {
+    eyes = EYES[0]; // wide_open — solid score
+  } else if (neynarScore >= 0.3) {
+    eyes = EYES[4]; // pizza_eyes — moderate score
   } else {
-    eyes = EYES[1]; // sleepy — small / new account
+    eyes = EYES[1]; // sleepy — low / new account
   }
 
   // ── 6. Nose ← Cast frequency (casts per recent batch) ────────────────────
@@ -298,12 +299,14 @@ export function computeTraits(
   const rarityScore = Math.min(
     100,
     Math.floor(
-      rand() * 30 +
-        (onChain.txCount > 100 ? 20 : 0) +
-        (user.followerCount > 500 ? 15 : 0) +
-        (usdcBalance > 1000 ? 15 : 0) +
+      rand() * 20 +
+        (neynarScore >= 0.8 ? 20 : neynarScore >= 0.5 ? 10 : 0) +
+        (onChain.txCount > 100 ? 15 : 0) +
+        (user.followerCount > 500 ? 10 : 0) +
+        (usdcBalance > 1000 ? 10 : 0) +
         (user.castCount > 30 ? 10 : 0) +
-        (engagementRate > 5 ? 10 : 0)
+        (engagementRate > 5 ? 10 : 0) +
+        (neynarScore >= 0.9 ? 5 : 0)
     )
   );
 

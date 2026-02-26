@@ -13,7 +13,7 @@ export const config = createConfig({
     injected(),
   ],
   transports: {
-    [base.id]: http(),
+    [base.id]: http(process.env.NEXT_PUBLIC_BASE_RPC_URL || undefined),
   },
   ssr: true,
 });

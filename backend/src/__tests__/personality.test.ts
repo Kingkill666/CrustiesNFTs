@@ -15,6 +15,7 @@ function mockUser(overrides: Partial<FarcasterUser> = {}): FarcasterUser {
     castCount: 25,
     recastCount: 10,
     likeCount: 50,
+    neynarScore: 0.5,
     recentCasts: [],
     ...overrides,
   };
@@ -80,7 +81,7 @@ describe("computeTraits", () => {
 
   it("assigns NFT Collector vibe for NFT holders", () => {
     const traits = computeTraits(
-      mockUser({ castCount: 3, likeCount: 5 }),
+      mockUser({ castCount: 10, likeCount: 5, followerCount: 600 }),
       mockOnChain({ hasNFTs: true, hasDeFiActivity: false, txCount: 30 })
     );
 

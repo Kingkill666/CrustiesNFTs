@@ -9,6 +9,7 @@ export interface FarcasterUser {
   castCount: number;
   recastCount: number;
   likeCount: number;
+  neynarScore: number;
   recentCasts: CastData[];
 }
 
@@ -88,6 +89,7 @@ export async function fetchFarcasterUser(fid: number): Promise<FarcasterUser> {
       (sum: number, c: CastData) => sum + c.likes,
       0
     ),
+    neynarScore: (user.experimental?.neynar_user_score || 0) as number,
     recentCasts,
   };
 }

@@ -13,6 +13,22 @@ function ipfsToHttp(uri: string): string {
   return uri;
 }
 
+const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
+
+async function withRetry<T>(fn: () => Promise<T>, retries = 3, baseDelay = 1000): Promise<T> {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      if (attempt === retries) throw err;
+      const delay = baseDelay * Math.pow(2, attempt);
+      console.log(`[useGallery] Retry ${attempt + 1} in ${delay}ms...`);
+      await wait(delay);
+    }
+  }
+  throw new Error('unreachable');
+}
+
 // Placeholder gallery using the 9 real Crustie grid images
 const PLACEHOLDER_GALLERY: GalleryEntry[] = [
   { tokenId: 7,   imageUrl: '/images/grid/crustie-007.png', minterUsername: 'pizza_degen',   rotation: '-3deg', flipX: false, filter: 'none' },
@@ -50,11 +66,13 @@ export function useGallery(limit = GALLERY_SIZE) {
       setIsLoading(true);
       try {
         // Read totalMinted from the contract
-        const totalMinted = await publicClient!.readContract({
-          address: CRUSTIES_CONTRACT_ADDRESS,
-          abi: CRUSTIES_ABI,
-          functionName: 'totalMinted',
-        });
+        const totalMinted = await withRetry(() =>
+          publicClient!.readContract({
+            address: CRUSTIES_CONTRACT_ADDRESS,
+            abi: CRUSTIES_ABI,
+            functionName: 'totalMinted',
+          })
+        );
 
         const count = Number(totalMinted);
         console.log('[useGallery] totalMinted:', count);
@@ -77,21 +95,24 @@ export function useGallery(limit = GALLERY_SIZE) {
           try {
             const tokenId = BigInt(i);
 
-            // Get owner address
-            const ownerAddr = await publicClient!.readContract({
-              address: CRUSTIES_CONTRACT_ADDRESS,
-              abi: CRUSTIES_ABI,
-              functionName: 'ownerOf',
-              args: [tokenId],
-            }) as string;
+            // Get owner address + tokenURI with retries
+            const ownerAddr = await withRetry(() =>
+              publicClient!.readContract({
+                address: CRUSTIES_CONTRACT_ADDRESS,
+                abi: CRUSTIES_ABI,
+                functionName: 'ownerOf',
+                args: [tokenId],
+              })
+            ) as string;
 
-            // Get tokenURI
-            const uri = await publicClient!.readContract({
-              address: CRUSTIES_CONTRACT_ADDRESS,
-              abi: CRUSTIES_ABI,
-              functionName: 'tokenURI',
-              args: [tokenId],
-            }) as string;
+            const uri = await withRetry(() =>
+              publicClient!.readContract({
+                address: CRUSTIES_CONTRACT_ADDRESS,
+                abi: CRUSTIES_ABI,
+                functionName: 'tokenURI',
+                args: [tokenId],
+              })
+            ) as string;
 
             // Fetch metadata from IPFS
             let imageUrl = '';
