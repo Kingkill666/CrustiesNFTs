@@ -31,7 +31,7 @@ export async function GET() {
       iconUrl: manifestImages.logo,
       homeUrl: baseUrl,
       imageUrl: manifestImages.hero,
-      buttonTitle: "Get Your Slice",
+      buttonTitle: "Get Your Crustie Now",
       splashImageUrl: manifestImages.splash,
       splashBackgroundColor: "#E63946",
       webhookUrl: "https://api.neynar.com/f/app/591d8b55-2775-4b41-80d0-888f8d18f578/event",

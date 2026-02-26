@@ -14,7 +14,7 @@ export async function generateMetadata(): Promise<Metadata> {
         version: "1",
         imageUrl: `${APP_URL}/og-image.png`,
         button: {
-          title: "Get Your Slice",
+          title: "Get Your Crustie Now",
           action: {
             type: "launch_miniapp",
             name: "Crusties",
