@@ -13,7 +13,7 @@ export async function GET() {
   const baseUrl = process.env.NEXT_PUBLIC_URL || "https://crusties-vmf-coin.vercel.app";
 
   const manifestImages = {
-    logo: "https://i.postimg.cc/6phXwvyB/crustie-logo.png",
+    logo: "https://i.postimg.cc/vZZnPyVt/app_logo.png",
     splash: "https://i.postimg.cc/15kxDKNz/app_splash.png",
     hero: "https://i.postimg.cc/pV1MLvW5/app_hero.png",
     og: "https://i.postimg.cc/pV1MLvW5/app_hero.png",
