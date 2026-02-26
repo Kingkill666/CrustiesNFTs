@@ -445,7 +445,7 @@ export function LandingScreen({ onStart, onViewOwned }: { onStart: () => void; o
         fontSize: 12, color: C.muted, textAlign: 'center',
         fontWeight: 600, fontFamily: F.body,
       }}>
-        IPFS storage · Base network · upgradeable contract
+        IPFS storage · Base network
       </p>
 
     </AppShell>
