@@ -2,7 +2,7 @@
  * assignment.ts
  *
  * Manages the one-to-one mapping of Farcaster FID → crustie image index.
- * Each FID gets exactly one crustie NFT image (crustie-000 through crustie-500).
+ * Each FID gets exactly one crustie NFT image (499 total: crustie-001 through crustie-500, excluding 103).
  * No two FIDs receive the same crustie image.
  *
  * Assignment is deterministic based on FID but also respects the "already claimed"
@@ -14,7 +14,21 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
 import { resolve, dirname } from "path";
 
-const TOTAL_CRUSTIES = 501; // crustie-000 through crustie-500
+const TOTAL_CRUSTIES = 499; // indices 0-498 (499 crusties — no crustie-103)
+
+// Valid crustie numbers: 1-102, 104-500 (103 has no image)
+const VALID_CRUSTIE_NUMBERS: number[] = [];
+for (let i = 1; i <= 500; i++) {
+  if (i !== 103) VALID_CRUSTIE_NUMBERS.push(i);
+}
+
+/**
+ * Convert a 0-based assignment index to a crustie number (1-indexed, skipping 103).
+ * Index 0 → 1, Index 101 → 102, Index 102 → 104, ..., Index 498 → 500
+ */
+export function indexToCrustieNumber(index: number): number {
+  return VALID_CRUSTIE_NUMBERS[index];
+}
 
 // Path to the assignments file.
 // ASSIGNMENTS_FILE env var lets you override in production.
@@ -24,7 +38,7 @@ const ASSIGNMENTS_FILE =
   resolve(process.cwd(), "data/assignments.json");
 
 interface AssignmentStore {
-  // FID (as string key) → crustie index (0-500)
+  // FID (as string key) → crustie index (0-498)
   fidToIndex: Record<string, number>;
   // Set of claimed indices — stored as array for JSON serialization
   claimedIndices: number[];
@@ -66,7 +80,7 @@ function fidToStartIndex(fid: number): number {
  * Get (or create) the crustie index assigned to a FID.
  * - If FID already has an assignment, returns it immediately.
  * - Otherwise, finds the next available index starting from the FID-derived seed.
- * - Returns null if all 501 crusties have been assigned.
+ * - Returns null if all 499 crusties have been assigned.
  */
 export function getOrAssign(fid: number): number | null {
   const store = loadStore();
