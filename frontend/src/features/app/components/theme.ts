@@ -19,15 +19,15 @@ export const C = {
 /** Font families */
 export const F = {
   display: "'Luckiest Guy', cursive",
-  body:    "'Luckiest Guy', cursive",
+  body:    "'Fredoka', sans-serif",
 } as const;
 
 /** Red/white checkerboard tablecloth SVG background */
 export const CHECKER_BG = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28'%3E%3Crect width='28' height='28' fill='%23fff'/%3E%3Crect x='0' y='0' width='14' height='14' fill='%23E63946' opacity='0.13'/%3E%3Crect x='14' y='14' width='14' height='14' fill='%23E63946' opacity='0.13'/%3E%3C/svg%3E")`;
 
-/** Google Fonts import — Luckiest Guy */
+/** Google Fonts import — Luckiest Guy + Fredoka */
 export const FONT_FACES = `
-  @import url('https://fonts.googleapis.com/css2?family=Luckiest+Guy&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Fredoka:wght@400;500;600;700&display=swap');
   * { box-sizing: border-box; }
 `;
 
