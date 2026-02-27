@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
+import { useAccount, useWriteContract, useWaitForTransactionReceipt, useSendCalls, useCallsStatus } from 'wagmi';
+import { encodeFunctionData } from 'viem';
 import { useFarcasterContext } from '@/hooks/useFarcasterContext';
 import { useCrusties } from '@/hooks/useCrusties';
 import {
@@ -37,14 +38,12 @@ export function MiniApp() {
 
   const mintStartedRef = useRef(false);
   const mintSuccessRef = useRef(false);
-  /** Tracks the approveHash we expect — prevents stale approval from triggering mint */
-  const pendingApproveHashRef = useRef<string | undefined>(undefined);
 
   const { address } = useAccount();
   const { fid, username, pfpUrl } = useFarcasterContext();
   const { generate, minEthPrice, minTokenPrice } = useCrusties();
 
-  // ── Mint contract write ─────────────────────────────────────────────────────
+  // ── ETH mint: single contract write ───────────────────────────────────────
   const {
     data: mintHash,
     writeContract: writeMint,
@@ -52,104 +51,82 @@ export function MiniApp() {
     error: mintWriteError,
   } = useWriteContract();
 
-  // ── Approve contract write (USDC) ───────────────────────────────────────────
-  const {
-    data: approveHash,
-    writeContract: writeApprove,
-    isPending: isApprovePending,
-    error: approveWriteError,
-  } = useWriteContract();
-
-  // ── Track approve hash so we only auto-mint for the current approval ────────
-  useEffect(() => {
-    if (approveHash) {
-      pendingApproveHashRef.current = approveHash;
-    }
-  }, [approveHash]);
-
-  // ── Wait for approval ───────────────────────────────────────────────────────
-  const {
-    isLoading: isConfirmingApprove,
-    isSuccess: isApproveConfirmed,
-  } = useWaitForTransactionReceipt({ hash: approveHash });
-
-  // ── Read current USDC allowance (refetches when approval confirms) ─────────
-  const { data: usdcAllowance, refetch: refetchAllowance } = useReadContract({
-    address: USDC_TOKEN_ADDRESS,
-    abi: ERC20_ABI,
-    functionName: 'allowance',
-    args: address ? [address, CRUSTIES_CONTRACT_ADDRESS] : undefined,
-    query: { enabled: !!address },
-  });
-
-  // ── Wait for mint ───────────────────────────────────────────────────────────
+  // ── Wait for ETH mint tx ──────────────────────────────────────────────────
   const {
     isLoading: isConfirmingMint,
     isSuccess: isMintConfirmed,
     data: mintReceipt,
   } = useWaitForTransactionReceipt({ hash: mintHash });
 
-  // ── When approval confirms, refetch allowance then fire the mint ─────────────
+  // ── USDC mint: batch approve + mint via EIP-5792 ──────────────────────────
+  const {
+    data: batchCallsId,
+    sendCalls,
+    isPending: isBatchPending,
+    error: batchWriteError,
+  } = useSendCalls();
+
+  // ── Poll batch status when we have a batch ID ─────────────────────────────
+  const batchId = batchCallsId?.id;
+  const {
+    data: batchStatus,
+  } = useCallsStatus({
+    id: batchId as string,
+    query: {
+      enabled: !!batchId,
+      refetchInterval: (data) =>
+        data.state.data?.status === 'pending' ? 1500 : false,
+    },
+  });
+
+  // ── When EIP-5792 batch succeeds, extract tokenId → success ───────────────
   useEffect(() => {
     if (
-      isApproveConfirmed &&
-      approveHash &&
-      approveHash === pendingApproveHashRef.current &&
-      pipeline.tokenURI &&
-      pipeline.signature &&
-      minTokenPrice
+      batchStatus?.status === 'success' &&
+      batchId &&
+      !mintSuccessRef.current
     ) {
-      console.log('[MiniApp] USDC approval confirmed, refetching allowance...');
-      // Refetch allowance so the RPC state is fresh before we fire mint
-      refetchAllowance().then(() => {
-        console.log('[MiniApp] Allowance refetched, waiting for sufficient allowance...');
-      });
+      console.log('[MiniApp] USDC batch confirmed!', { batchId, receipts: batchStatus.receipts?.length });
+      mintSuccessRef.current = true;
+
+      let tokenId: number | undefined;
+      let txHash: string | undefined;
+      try {
+        // Look through all receipts for the ERC-721 Transfer event
+        const receipts = batchStatus.receipts ?? [];
+        for (const receipt of receipts) {
+          txHash = txHash || receipt.transactionHash;
+          const logs = receipt.logs ?? [];
+          const transferLog = logs.find(
+            (log) =>
+              log.topics[0] ===
+              '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
+          );
+          if (transferLog?.topics[3]) {
+            tokenId = Number(BigInt(transferLog.topics[3]));
+            txHash = receipt.transactionHash;
+            break;
+          }
+        }
+      } catch {
+        // Non-critical
+      }
+
+      setPipeline(p => ({ ...p, tokenId, txHash }));
+      setScreen('success');
     }
-  }, [isApproveConfirmed, approveHash, pipeline.tokenURI, pipeline.signature, minTokenPrice, refetchAllowance]);
 
-  // ── When allowance is sufficient after approval, fire the mint ─────────────
-  useEffect(() => {
-    // All conditions must be met:
-    // 1. Approval tx is confirmed on-chain
-    // 2. This is the approval we're waiting for (not stale)
-    // 3. We have the token URI and signature from backend
-    // 4. The on-chain allowance is now >= the mint price
-    const hasPendingApprove = pendingApproveHashRef.current !== undefined;
-    const isCurrentApprove = approveHash === pendingApproveHashRef.current;
-    const allowanceSufficient =
-      usdcAllowance !== undefined &&
-      minTokenPrice !== undefined &&
-      BigInt(usdcAllowance as bigint) >= BigInt(minTokenPrice as bigint);
-
-    if (
-      isApproveConfirmed &&
-      hasPendingApprove &&
-      isCurrentApprove &&
-      pipeline.tokenURI &&
-      pipeline.signature &&
-      minTokenPrice &&
-      allowanceSufficient
-    ) {
-      console.log('[MiniApp] Allowance sufficient, firing mintWithToken...', {
-        allowance: usdcAllowance?.toString(),
-        required: minTokenPrice?.toString(),
-      });
-      // Clear the ref so we don't fire again for the same approval
-      pendingApproveHashRef.current = undefined;
-      const sigBytes = pipeline.signature as `0x${string}`;
-      writeMint({
-        address: CRUSTIES_CONTRACT_ADDRESS,
-        abi: CRUSTIES_ABI,
-        functionName: 'mintWithToken',
-        args: [pipeline.tokenURI, minTokenPrice, sigBytes],
-      });
+    // Handle batch failure
+    if (batchStatus?.status === 'failure' && batchId && !mintSuccessRef.current) {
+      console.error('[MiniApp] USDC batch failed!', { batchId });
+      setPipeline(p => ({ ...p, error: 'Transaction failed. Please try again.', preparing: false }));
     }
-  }, [isApproveConfirmed, approveHash, pipeline.tokenURI, pipeline.signature, minTokenPrice, usdcAllowance, writeMint]);
+  }, [batchStatus, batchId]);
 
-  // ── When mint tx is confirmed on-chain, extract tokenId → success ───────────
+  // ── When ETH mint tx is confirmed on-chain, extract tokenId → success ─────
   useEffect(() => {
     if (isMintConfirmed && mintReceipt && mintHash && !mintSuccessRef.current) {
-      console.log('[MiniApp] Mint confirmed on-chain!', { mintHash, logsCount: mintReceipt.logs.length });
+      console.log('[MiniApp] ETH mint confirmed on-chain!', { mintHash, logsCount: mintReceipt.logs.length });
       mintSuccessRef.current = true;
 
       let tokenId: number | undefined;
@@ -185,21 +162,21 @@ export function MiniApp() {
   }, [mintWriteError]);
 
   useEffect(() => {
-    if (approveWriteError) {
-      console.error('[MiniApp] approveWriteError:', approveWriteError.message, approveWriteError);
-      const msg = approveWriteError.message.includes('user rejected')
-        ? 'Approval cancelled.'
-        : 'USDC approval failed. Please try again.';
+    if (batchWriteError) {
+      console.error('[MiniApp] batchWriteError:', batchWriteError.message, batchWriteError);
+      const msg = batchWriteError.message.includes('user rejected')
+        ? 'Transaction cancelled.'
+        : 'Transaction failed. Please try again.';
       setPipeline(p => ({ ...p, error: msg, preparing: false }));
     }
-  }, [approveWriteError]);
+  }, [batchWriteError]);
 
   // ── When wallet prompt appears (pending), move to minting screen ────────────
   useEffect(() => {
-    if ((isMintPending || isApprovePending) && screen === 'mint') {
+    if ((isMintPending || isBatchPending) && screen === 'mint') {
       setScreen('minting');
     }
-  }, [isMintPending, isApprovePending, screen]);
+  }, [isMintPending, isBatchPending, screen]);
 
   // ── Navigation handlers ─────────────────────────────────────────────────────
 
@@ -239,7 +216,6 @@ export function MiniApp() {
 
     mintStartedRef.current = false;
     mintSuccessRef.current = false;
-    pendingApproveHashRef.current = undefined;
     setPipeline(p => ({ ...p, payment: method, error: undefined, preparing: true }));
 
     try {
@@ -303,23 +279,40 @@ export function MiniApp() {
           value: minEthPrice ?? BigInt(1000000000000000),
         });
       } else {
-        console.log('[MiniApp] Calling writeApprove (USDC)', {
+        // EIP-5792: Batch USDC approve + mintWithToken in a single wallet confirmation
+        const tokenPrice = minTokenPrice ?? BigInt(3000000);
+        console.log('[MiniApp] Sending batched USDC approve + mint (EIP-5792)', {
           usdcAddress: USDC_TOKEN_ADDRESS,
           spender: CRUSTIES_CONTRACT_ADDRESS,
-          amount: (minTokenPrice ?? BigInt(3000000)).toString(),
+          amount: tokenPrice.toString(),
+          uri,
         });
-        writeApprove({
-          address: USDC_TOKEN_ADDRESS,
-          abi: ERC20_ABI,
-          functionName: 'approve',
-          args: [CRUSTIES_CONTRACT_ADDRESS, minTokenPrice ?? BigInt(3000000)],
+        sendCalls({
+          calls: [
+            {
+              to: USDC_TOKEN_ADDRESS,
+              data: encodeFunctionData({
+                abi: ERC20_ABI,
+                functionName: 'approve',
+                args: [CRUSTIES_CONTRACT_ADDRESS, tokenPrice],
+              }),
+            },
+            {
+              to: CRUSTIES_CONTRACT_ADDRESS,
+              data: encodeFunctionData({
+                abi: CRUSTIES_ABI,
+                functionName: 'mintWithToken',
+                args: [uri, tokenPrice, sigBytes],
+              }),
+            },
+          ],
         });
       }
     } catch (err) {
       console.error('[MiniApp] Mint flow error:', err);
       setPipeline(p => ({ ...p, error: 'Something went wrong. Please try again.', preparing: false }));
     }
-  }, [fid, address, generate, writeMint, writeApprove, minEthPrice, minTokenPrice]);
+  }, [fid, address, generate, writeMint, sendCalls, minEthPrice, minTokenPrice]);
 
   const handleViewOwned = useCallback(() => {
     setScreen('owned');
@@ -355,7 +348,7 @@ export function MiniApp() {
         payment={pipeline.payment}
         tokenURI={pipeline.tokenURI}
         onHome={goLanding}
-        isMintPending={isMintPending || isApprovePending || isConfirmingApprove || isConfirmingMint}
+        isMintPending={isMintPending || isBatchPending || isConfirmingMint || batchStatus?.status === 'pending'}
         mintError={pipeline.error}
       />
     );
