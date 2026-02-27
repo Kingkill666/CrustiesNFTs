@@ -1,5 +1,6 @@
 'use client';
 
+import { sdk } from '@farcaster/miniapp-sdk';
 import { C, F, CHECKER_BG, ANIM_STYLES, FONT_FACES } from '@/features/app/components/theme';
 
 interface AppShellProps {
@@ -83,12 +84,26 @@ export function AppShell({ children, onHome }: AppShellProps) {
             </span>
           </div>
 
-          {/* Pizza Party logo */}
-          <a
-            href="https://farcaster.xyz/miniapps/wgY6OPqYoIkz/pizza-party"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', flexShrink: 0 }}
+          {/* Pizza Party logo — opens Pizza Party mini app via SDK */}
+          <button
+            onClick={async () => {
+              try {
+                await sdk.actions.openMiniApp({
+                  url: 'https://farcaster.xyz/miniapps/wgY6OPqYoIkz/pizza-party',
+                });
+              } catch (err) {
+                console.warn('[AppShell] openMiniApp failed:', err);
+              }
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              flexShrink: 0,
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: 0,
+            }}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -99,7 +114,7 @@ export function AppShell({ children, onHome }: AppShellProps) {
               style={{ borderRadius: 10, objectFit: 'cover', display: 'block' }}
               onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
             />
-          </a>
+          </button>
         </div>
 
         {/* ── Page content ──────────────────────────────────────────────── */}
