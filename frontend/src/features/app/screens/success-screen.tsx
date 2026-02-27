@@ -150,24 +150,6 @@ export function SuccessScreen({
       </Card>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <button
-          onClick={() => window.open('https://warpcast.com/~/settings', '_blank')}
-          style={{
-            width: '100%', borderRadius: 16,
-            border: `2.5px solid ${C.orangeD}`,
-            background: `linear-gradient(160deg, ${C.orange} 0%, ${C.orangeD} 100%)`,
-            padding: '17px 16px', cursor: 'pointer',
-            boxShadow: `0 4px 0 ${C.orangeD}`, minHeight: 56,
-          }}
-        >
-          <p style={{ color: '#fff', fontWeight: 900, fontSize: 17, margin: 0, fontFamily: F.display, letterSpacing: 0.5 }}>
-            🖼️ Set as Farcaster PFP
-          </p>
-          <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11, margin: '3px 0 0', fontWeight: 600 }}>
-            Open Warpcast settings to update
-          </p>
-        </button>
-
         <ShareButton
           text={`just dropped the craziest ${rarity} pizza NFT on Base 🍕🔥 Crustie #${tokenId} — "${vibe}" — generated from my Farcaster identity. no two are alike. mint yours 👇`}
           embeds={buildShareEmbeds({ imageUrl })}
