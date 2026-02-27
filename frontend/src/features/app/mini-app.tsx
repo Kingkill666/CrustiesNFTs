@@ -37,6 +37,8 @@ export function MiniApp() {
 
   const mintStartedRef = useRef(false);
   const mintSuccessRef = useRef(false);
+  /** Tracks the approveHash we expect — prevents stale approval from triggering mint */
+  const pendingApproveHashRef = useRef<string | undefined>(undefined);
 
   const { address } = useAccount();
   const { fid, username, pfpUrl } = useFarcasterContext();
@@ -58,6 +60,13 @@ export function MiniApp() {
     error: approveWriteError,
   } = useWriteContract();
 
+  // ── Track approve hash so we only auto-mint for the current approval ────────
+  useEffect(() => {
+    if (approveHash) {
+      pendingApproveHashRef.current = approveHash;
+    }
+  }, [approveHash]);
+
   // ── Wait for approval ───────────────────────────────────────────────────────
   const {
     isLoading: isConfirmingApprove,
@@ -73,8 +82,18 @@ export function MiniApp() {
 
   // ── When approval confirms, auto-fire the mint ──────────────────────────────
   useEffect(() => {
-    if (isApproveConfirmed && pipeline.tokenURI && pipeline.signature && minTokenPrice) {
+    // Only fire mint if THIS approval hash matches what we're waiting for
+    if (
+      isApproveConfirmed &&
+      approveHash &&
+      approveHash === pendingApproveHashRef.current &&
+      pipeline.tokenURI &&
+      pipeline.signature &&
+      minTokenPrice
+    ) {
       console.log('[MiniApp] USDC approval confirmed, firing mintWithToken...');
+      // Clear the ref so we don't fire again for the same approval
+      pendingApproveHashRef.current = undefined;
       const sigBytes = pipeline.signature as `0x${string}`;
       writeMint({
         address: CRUSTIES_CONTRACT_ADDRESS,
@@ -83,7 +102,7 @@ export function MiniApp() {
         args: [pipeline.tokenURI, minTokenPrice, sigBytes],
       });
     }
-  }, [isApproveConfirmed, pipeline.tokenURI, pipeline.signature, minTokenPrice, writeMint]);
+  }, [isApproveConfirmed, approveHash, pipeline.tokenURI, pipeline.signature, minTokenPrice, writeMint]);
 
   // ── When mint tx is confirmed on-chain, extract tokenId → success ───────────
   useEffect(() => {
@@ -178,6 +197,7 @@ export function MiniApp() {
 
     mintStartedRef.current = false;
     mintSuccessRef.current = false;
+    pendingApproveHashRef.current = undefined;
     setPipeline(p => ({ ...p, payment: method, error: undefined, preparing: true }));
 
     try {
