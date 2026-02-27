@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
 import { useFarcasterContext } from '@/hooks/useFarcasterContext';
 import { useCrusties } from '@/hooks/useCrusties';
 import {
@@ -73,6 +73,15 @@ export function MiniApp() {
     isSuccess: isApproveConfirmed,
   } = useWaitForTransactionReceipt({ hash: approveHash });
 
+  // ── Read current USDC allowance (refetches when approval confirms) ─────────
+  const { data: usdcAllowance, refetch: refetchAllowance } = useReadContract({
+    address: USDC_TOKEN_ADDRESS,
+    abi: ERC20_ABI,
+    functionName: 'allowance',
+    args: address ? [address, CRUSTIES_CONTRACT_ADDRESS] : undefined,
+    query: { enabled: !!address },
+  });
+
   // ── Wait for mint ───────────────────────────────────────────────────────────
   const {
     isLoading: isConfirmingMint,
@@ -80,9 +89,8 @@ export function MiniApp() {
     data: mintReceipt,
   } = useWaitForTransactionReceipt({ hash: mintHash });
 
-  // ── When approval confirms, auto-fire the mint ──────────────────────────────
+  // ── When approval confirms, refetch allowance then fire the mint ─────────────
   useEffect(() => {
-    // Only fire mint if THIS approval hash matches what we're waiting for
     if (
       isApproveConfirmed &&
       approveHash &&
@@ -91,7 +99,41 @@ export function MiniApp() {
       pipeline.signature &&
       minTokenPrice
     ) {
-      console.log('[MiniApp] USDC approval confirmed, firing mintWithToken...');
+      console.log('[MiniApp] USDC approval confirmed, refetching allowance...');
+      // Refetch allowance so the RPC state is fresh before we fire mint
+      refetchAllowance().then(() => {
+        console.log('[MiniApp] Allowance refetched, waiting for sufficient allowance...');
+      });
+    }
+  }, [isApproveConfirmed, approveHash, pipeline.tokenURI, pipeline.signature, minTokenPrice, refetchAllowance]);
+
+  // ── When allowance is sufficient after approval, fire the mint ─────────────
+  useEffect(() => {
+    // All conditions must be met:
+    // 1. Approval tx is confirmed on-chain
+    // 2. This is the approval we're waiting for (not stale)
+    // 3. We have the token URI and signature from backend
+    // 4. The on-chain allowance is now >= the mint price
+    const hasPendingApprove = pendingApproveHashRef.current !== undefined;
+    const isCurrentApprove = approveHash === pendingApproveHashRef.current;
+    const allowanceSufficient =
+      usdcAllowance !== undefined &&
+      minTokenPrice !== undefined &&
+      BigInt(usdcAllowance as bigint) >= BigInt(minTokenPrice as bigint);
+
+    if (
+      isApproveConfirmed &&
+      hasPendingApprove &&
+      isCurrentApprove &&
+      pipeline.tokenURI &&
+      pipeline.signature &&
+      minTokenPrice &&
+      allowanceSufficient
+    ) {
+      console.log('[MiniApp] Allowance sufficient, firing mintWithToken...', {
+        allowance: usdcAllowance?.toString(),
+        required: minTokenPrice?.toString(),
+      });
       // Clear the ref so we don't fire again for the same approval
       pendingApproveHashRef.current = undefined;
       const sigBytes = pipeline.signature as `0x${string}`;
@@ -102,7 +144,7 @@ export function MiniApp() {
         args: [pipeline.tokenURI, minTokenPrice, sigBytes],
       });
     }
-  }, [isApproveConfirmed, approveHash, pipeline.tokenURI, pipeline.signature, minTokenPrice, writeMint]);
+  }, [isApproveConfirmed, approveHash, pipeline.tokenURI, pipeline.signature, minTokenPrice, usdcAllowance, writeMint]);
 
   // ── When mint tx is confirmed on-chain, extract tokenId → success ───────────
   useEffect(() => {
