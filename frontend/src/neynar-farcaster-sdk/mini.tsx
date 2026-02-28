@@ -3,40 +3,22 @@
 import { sdk } from '@farcaster/miniapp-sdk';
 import { C, F } from '@/features/app/components/theme';
 
-const APP_URL = process.env.NEXT_PUBLIC_URL || 'https://crusties-vmf-coin.vercel.app';
 const MINIAPP_URL = 'https://farcaster.xyz/miniapps/b8-LN08vo1G6/crusties';
 
 /**
- * Build the /share page URL with OG meta tags for the minted Crustie.
- * Farcaster unfurls this URL and renders the OG image in the cast card.
- */
-function buildShareUrl(opts: {
-  tokenId?: number;
-  vibe?: string;
-  rarity?: string;
-}): string {
-  if (!opts.tokenId) return APP_URL;
-  const params = new URLSearchParams();
-  params.set('tokenId', String(opts.tokenId));
-  if (opts.vibe) params.set('vibe', opts.vibe);
-  if (opts.rarity) params.set('rarity', opts.rarity);
-  return `${APP_URL}/share?${params.toString()}`;
-}
-
-/**
  * Build share embeds for composeCast.
- * Uses the /share page URL (which has OG meta tags with the NFT image)
- * so Farcaster can unfurl it into a rich card showing the Crustie.
+ * Returns [imageUrl, miniAppUrl] so the cast shows the NFT image
+ * and a clickable link to open the Crusties mini app.
  */
 export function buildShareEmbeds(opts?: {
+  imageUrl?: string;
   tokenId?: number;
   vibe?: string;
   rarity?: string;
-  imageUrl?: string; // unused — kept for call-site compat, image resolved on-chain via tokenId
 }): [string] | [string, string] {
-  if (opts?.tokenId) {
-    const shareUrl = buildShareUrl(opts);
-    return [shareUrl, MINIAPP_URL];
+  const imageUrl = opts?.imageUrl;
+  if (imageUrl) {
+    return [imageUrl, MINIAPP_URL];
   }
   return [MINIAPP_URL];
 }
