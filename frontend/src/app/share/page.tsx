@@ -9,12 +9,15 @@ interface SharePageProps {
 export async function generateMetadata({ searchParams }: SharePageProps): Promise<Metadata> {
   const params = await searchParams;
   const tokenId = typeof params.tokenId === 'string' ? params.tokenId : '';
-  const image = typeof params.image === 'string' ? params.image : '';
   const vibe = typeof params.vibe === 'string' ? params.vibe : 'Pizza NFT';
   const rarity = typeof params.rarity === 'string' ? params.rarity : '';
 
-  // Use the NFT image for the embed card, fallback to generic OG image
-  const imageUrl = image || `${APP_URL}/og-image.png`;
+  // Use our image proxy route so Farcaster can reliably fetch the NFT image.
+  // /api/image?tokenId=X reads the on-chain tokenURI, fetches IPFS metadata,
+  // and redirects to the actual image via a reliable gateway.
+  const imageUrl = tokenId
+    ? `${APP_URL}/api/image?tokenId=${tokenId}`
+    : `${APP_URL}/og-image.png`;
   const title = tokenId ? `Crustie #${tokenId} — ${vibe}` : 'Crusties — Pizza NFTs on Base';
   const description = rarity
     ? `A ${rarity} Crustie pizza NFT on Base. Mint yours!`

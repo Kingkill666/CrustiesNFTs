@@ -12,14 +12,12 @@ const MINIAPP_URL = 'https://farcaster.xyz/miniapps/b8-LN08vo1G6/crusties';
  */
 function buildShareUrl(opts: {
   tokenId?: number;
-  imageUrl?: string;
   vibe?: string;
   rarity?: string;
 }): string {
   if (!opts.tokenId) return APP_URL;
   const params = new URLSearchParams();
   params.set('tokenId', String(opts.tokenId));
-  if (opts.imageUrl) params.set('image', opts.imageUrl);
   if (opts.vibe) params.set('vibe', opts.vibe);
   if (opts.rarity) params.set('rarity', opts.rarity);
   return `${APP_URL}/share?${params.toString()}`;
@@ -32,9 +30,9 @@ function buildShareUrl(opts: {
  */
 export function buildShareEmbeds(opts?: {
   tokenId?: number;
-  imageUrl?: string;
   vibe?: string;
   rarity?: string;
+  imageUrl?: string; // unused — kept for call-site compat, image resolved on-chain via tokenId
 }): [string] | [string, string] {
   if (opts?.tokenId) {
     const shareUrl = buildShareUrl(opts);
