@@ -1,14 +1,14 @@
 import { Hono } from "hono";
 import {
-  getOrAssign,
-  getOrAssignByTier,
-  reassignByTier,
-  getAssignment,
+  getOrAssignForSlot,
+  getOrAssignByTierForSlot,
+  reassignByTierForSlot,
+  getAssignments,
   indexToCrustieNumber,
 } from "../assignment.js";
 import { getPrePinnedUri, getCuratedTraits } from "../ipfs-lookup.js";
 import { signMintPermit } from "../signer.js";
-import { getNonce } from "../nonce.js";
+import { getNonce, getMintCount } from "../nonce.js";
 import { fetchFarcasterUser } from "../farcaster.js";
 import { fetchOnChainData } from "../onchain.js";
 import { computeTraits, rarityScoreToTier } from "../personality.js";
@@ -31,11 +31,24 @@ generateRoute.post("/generate", async (c) => {
   }
 
   try {
-    // ── Fast path: FID already assigned and not re-rolling ──────────────
-    const existingIdx = getAssignment(fid);
-    if (existingIdx !== null && !forceRegenerate) {
-      console.log("[generate] Returning cached assignment for fid", fid);
-      return c.json(await buildResponse(existingIdx, fid, minterAddress));
+    // ── Determine which mint slot this is ────────────────────────────────
+    // Check how many times this wallet has already minted on-chain.
+    // The next crustie they get should be for mint slot = onChainMintCount.
+    let mintSlot = 0;
+    if (
+      minterAddress &&
+      minterAddress !== "0x0000000000000000000000000000000000000000"
+    ) {
+      const onChainCount = await getMintCount(minterAddress as Hex);
+      mintSlot = Number(onChainCount);
+      console.log("[generate] On-chain mintCount for", minterAddress, "=", mintSlot);
+    }
+
+    // ── Fast path: FID already has an assignment for this slot ────────────
+    const existingAssignments = getAssignments(fid);
+    if (mintSlot < existingAssignments.length && !forceRegenerate) {
+      console.log("[generate] Returning cached assignment for fid", fid, "slot", mintSlot);
+      return c.json(await buildResponse(existingAssignments[mintSlot], fid, minterAddress));
     }
 
     // ── Dynamic personality pipeline ────────────────────────────────────
@@ -68,22 +81,22 @@ generateRoute.post("/generate", async (c) => {
       console.warn("[generate] Personality pipeline failed, falling back to random assignment:", err);
     }
 
-    // ── Assign crustie by tier ──────────────────────────────────────────
+    // ── Assign crustie for this mint slot ──────────────────────────────────
     let crustieIndex: number | null;
 
-    if (forceRegenerate && existingIdx !== null) {
-      // Re-roll: release current and pick new one in the same tier
-      console.log("[generate] Re-rolling for fid", fid, "in tier", rarityTier);
-      crustieIndex = reassignByTier(fid, rarityTier);
+    if (forceRegenerate && mintSlot < existingAssignments.length) {
+      // Re-roll: release current slot assignment and pick a new one
+      console.log("[generate] Re-rolling for fid", fid, "slot", mintSlot, "in tier", rarityTier);
+      crustieIndex = reassignByTierForSlot(fid, mintSlot, rarityTier);
     } else if (personalityTraits) {
       // New assignment by computed tier
-      crustieIndex = getOrAssignByTier(fid, rarityTier);
+      crustieIndex = getOrAssignByTierForSlot(fid, mintSlot, rarityTier);
     } else {
       // Fallback: random assignment (personality pipeline failed)
-      crustieIndex = getOrAssign(fid);
+      crustieIndex = getOrAssignForSlot(fid, mintSlot);
     }
 
-    console.log("[generate] Assignment:", { fid, crustieIndex, rarityTier });
+    console.log("[generate] Assignment:", { fid, mintSlot, crustieIndex, rarityTier });
 
     if (crustieIndex === null) {
       console.log("[generate] All crusties assigned — sold out");

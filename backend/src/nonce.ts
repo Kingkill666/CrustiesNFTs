@@ -18,6 +18,16 @@ const NONCES_ABI = [
   },
 ] as const;
 
+const MINT_COUNT_ABI = [
+  {
+    name: "mintCount",
+    type: "function",
+    stateMutability: "view",
+    inputs: [{ name: "", type: "address" }],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+] as const;
+
 export async function getNonce(minterAddress: Hex): Promise<bigint> {
   if (!CRUSTIES_CONTRACT_ADDRESS || CRUSTIES_CONTRACT_ADDRESS === "0x") {
     return 0n;
@@ -31,4 +41,22 @@ export async function getNonce(minterAddress: Hex): Promise<bigint> {
   });
 
   return nonce;
+}
+
+/**
+ * Read how many times a wallet has already minted from the on-chain contract.
+ */
+export async function getMintCount(minterAddress: Hex): Promise<bigint> {
+  if (!CRUSTIES_CONTRACT_ADDRESS || CRUSTIES_CONTRACT_ADDRESS === "0x") {
+    return 0n;
+  }
+
+  const count = await client.readContract({
+    address: CRUSTIES_CONTRACT_ADDRESS,
+    abi: MINT_COUNT_ABI,
+    functionName: "mintCount",
+    args: [minterAddress],
+  });
+
+  return count;
 }

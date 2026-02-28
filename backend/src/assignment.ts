@@ -1,9 +1,9 @@
 /**
  * assignment.ts
  *
- * Manages the one-to-one mapping of Farcaster FID → crustie image index.
- * Each FID gets exactly one crustie NFT image (499 total: crustie-001 through crustie-500, excluding 103).
- * No two FIDs receive the same crustie image.
+ * Manages the mapping of Farcaster FID → crustie image indices.
+ * Each FID can be assigned multiple crusties (one per mint, up to maxMintsPerWallet).
+ * No two mints ever receive the same crustie image.
  *
  * Assignment is deterministic based on FID but also respects the "already claimed"
  * set — if the computed index is taken, we walk forward to find the next available one.
@@ -39,10 +39,25 @@ const ASSIGNMENTS_FILE =
   resolve(process.cwd(), "data/assignments.json");
 
 interface AssignmentStore {
-  // FID (as string key) → crustie index (0-498)
-  fidToIndex: Record<string, number>;
+  // FID (as string key) → array of crustie indices (one per mint slot)
+  // Legacy compat: may also be a single number from old format
+  fidToIndex: Record<string, number | number[]>;
   // Set of claimed indices — stored as array for JSON serialization
   claimedIndices: number[];
+}
+
+/** Normalize a store entry to always return an array. */
+function getIndicesForFid(store: AssignmentStore, fid: number): number[] {
+  const val = store.fidToIndex[String(fid)];
+  if (val === undefined) return [];
+  if (Array.isArray(val)) return val;
+  // Legacy single-number format — migrate to array
+  return [val];
+}
+
+/** Set the indices array for an FID. */
+function setIndicesForFid(store: AssignmentStore, fid: number, indices: number[]): void {
+  store.fidToIndex[String(fid)] = indices;
 }
 
 function loadStore(): AssignmentStore {
@@ -71,48 +86,71 @@ function saveStore(store: AssignmentStore): void {
  * Simple seeded LCG random, same as personality.ts.
  * Produces a deterministic starting index for a given FID.
  */
-function fidToStartIndex(fid: number): number {
-  let s = fid * 7919 + 42;
+function fidToStartIndex(fid: number, salt: number = 0): number {
+  let s = (fid * 7919 + 42 + salt * 104729);
   s = (s * 16807 + 0) % 2147483647;
   return Math.abs(s % TOTAL_CRUSTIES);
 }
 
 /**
- * Get (or create) the crustie index assigned to a FID.
- * - If FID already has an assignment, returns it immediately.
- * - Otherwise, finds the next available index starting from the FID-derived seed.
- * - Returns null if all 499 crusties have been assigned.
+ * Find and claim the next unclaimed crustie index.
+ * Uses a deterministic seed derived from FID + salt (mint slot number).
+ * Returns null if all 499 crusties are claimed.
  */
-export function getOrAssign(fid: number): number | null {
-  const store = loadStore();
-
-  // Already assigned
-  const existing = store.fidToIndex[String(fid)];
-  if (existing !== undefined) {
-    return existing;
-  }
-
-  // All crusties claimed
-  if (store.claimedIndices.length >= TOTAL_CRUSTIES) {
-    return null;
-  }
+function claimNextAvailable(store: AssignmentStore, fid: number, salt: number): number | null {
+  if (store.claimedIndices.length >= TOTAL_CRUSTIES) return null;
 
   const claimedSet = new Set(store.claimedIndices);
-  const startIndex = fidToStartIndex(fid);
+  const startIndex = fidToStartIndex(fid, salt);
 
-  // Walk forward from the seed index to find the first unclaimed slot
   for (let offset = 0; offset < TOTAL_CRUSTIES; offset++) {
     const candidate = (startIndex + offset) % TOTAL_CRUSTIES;
     if (!claimedSet.has(candidate)) {
-      // Claim it
-      store.fidToIndex[String(fid)] = candidate;
-      store.claimedIndices.push(candidate);
-      saveStore(store);
       return candidate;
     }
   }
 
   return null;
+}
+
+/**
+ * Get the crustie index for a FID at a specific mint slot.
+ * `mintSlot` is 0-based: 0 = first mint, 1 = second mint, 2 = third mint.
+ *
+ * - If the FID already has an assignment for this slot, returns it.
+ * - Otherwise, claims a new unique crustie and saves it.
+ * - Returns null if all 499 crusties have been assigned.
+ */
+export function getOrAssignForSlot(fid: number, mintSlot: number): number | null {
+  const store = loadStore();
+  const indices = getIndicesForFid(store, fid);
+
+  // Already have an assignment for this slot
+  if (mintSlot < indices.length) {
+    return indices[mintSlot];
+  }
+
+  // Need to fill in all slots up to and including mintSlot
+  // (in case slots were skipped somehow)
+  for (let slot = indices.length; slot <= mintSlot; slot++) {
+    const candidate = claimNextAvailable(store, fid, slot);
+    if (candidate === null) return null;
+
+    indices.push(candidate);
+    store.claimedIndices.push(candidate);
+  }
+
+  setIndicesForFid(store, fid, indices);
+  saveStore(store);
+  return indices[mintSlot];
+}
+
+/**
+ * Get (or create) the crustie index assigned to a FID (first slot).
+ * Backward-compatible wrapper — returns the first assignment for this FID.
+ */
+export function getOrAssign(fid: number): number | null {
+  return getOrAssignForSlot(fid, 0);
 }
 
 /**
@@ -124,13 +162,21 @@ export function assignedCount(): number {
 }
 
 /**
- * Returns the crustie index for a FID if already assigned, or null if not yet assigned.
+ * Returns the crustie index for a FID's first assignment if it exists, or null.
  * Does NOT create a new assignment.
  */
 export function getAssignment(fid: number): number | null {
   const store = loadStore();
-  const idx = store.fidToIndex[String(fid)];
-  return idx !== undefined ? idx : null;
+  const indices = getIndicesForFid(store, fid);
+  return indices.length > 0 ? indices[0] : null;
+}
+
+/**
+ * Returns all crustie indices assigned to a FID.
+ */
+export function getAssignments(fid: number): number[] {
+  const store = loadStore();
+  return getIndicesForFid(store, fid);
 }
 
 // ─── Tier-based assignment ───────────────────────────────────────────────────
@@ -167,20 +213,11 @@ function getTierIndex(): Record<string, number[]> {
 }
 
 /**
- * Assign a crustie to a FID, picking from a specific rarity tier.
- * - If FID already has an assignment, returns it (ignores tier).
- * - Otherwise, picks a random unclaimed crustie within the tier.
- * - Falls back to any unclaimed crustie if the tier is exhausted.
- * - Returns null if all 499 crusties are claimed.
+ * Claim a crustie from a specific tier for a given FID + mint slot.
+ * Falls back to any unclaimed crustie if the tier is exhausted.
+ * Returns null if all 499 are claimed.
  */
-export function getOrAssignByTier(fid: number, tier: string): number | null {
-  const store = loadStore();
-
-  // Already assigned — return existing
-  const existing = store.fidToIndex[String(fid)];
-  if (existing !== undefined) return existing;
-
-  // All crusties claimed
+function claimFromTier(store: AssignmentStore, fid: number, salt: number, tier: string): number | null {
   if (store.claimedIndices.length >= TOTAL_CRUSTIES) return null;
 
   const claimedSet = new Set(store.claimedIndices);
@@ -191,35 +228,74 @@ export function getOrAssignByTier(fid: number, tier: string): number | null {
   const available = tierIndices.filter((idx) => !claimedSet.has(idx));
 
   if (available.length > 0) {
-    // Pick deterministically using FID seed
-    const seed = fidToStartIndex(fid);
-    const pick = available[seed % available.length];
-    store.fidToIndex[String(fid)] = pick;
-    store.claimedIndices.push(pick);
-    saveStore(store);
-    return pick;
+    const seed = fidToStartIndex(fid, salt);
+    return available[seed % available.length];
   }
 
   // Tier exhausted — fall back to any unclaimed crustie
-  return getOrAssign(fid);
+  return claimNextAvailable(store, fid, salt);
 }
 
 /**
- * Re-roll: release the FID's current assignment and pick a new one in the same tier.
- * Returns null if no more are available in that tier (or any tier).
+ * Assign a crustie to a FID at a specific mint slot, picking from a rarity tier.
+ * - If FID already has an assignment for this slot, returns it.
+ * - Otherwise, picks from the tier (or any available if tier is exhausted).
+ * - Returns null if all 499 crusties are claimed.
  */
-export function reassignByTier(fid: number, tier: string): number | null {
+export function getOrAssignByTierForSlot(fid: number, mintSlot: number, tier: string): number | null {
   const store = loadStore();
+  const indices = getIndicesForFid(store, fid);
 
-  // Release current assignment if one exists
-  const currentIdx = store.fidToIndex[String(fid)];
-  if (currentIdx !== undefined) {
-    delete store.fidToIndex[String(fid)];
-    store.claimedIndices = store.claimedIndices.filter((i) => i !== currentIdx);
+  // Already have an assignment for this slot
+  if (mintSlot < indices.length) {
+    return indices[mintSlot];
+  }
+
+  // Fill in all slots up to and including mintSlot
+  for (let slot = indices.length; slot <= mintSlot; slot++) {
+    const candidate = claimFromTier(store, fid, slot, tier);
+    if (candidate === null) return null;
+
+    indices.push(candidate);
+    store.claimedIndices.push(candidate);
+  }
+
+  setIndicesForFid(store, fid, indices);
+  saveStore(store);
+  return indices[mintSlot];
+}
+
+/**
+ * Backward-compatible wrapper — assigns first slot by tier.
+ */
+export function getOrAssignByTier(fid: number, tier: string): number | null {
+  return getOrAssignByTierForSlot(fid, 0, tier);
+}
+
+/**
+ * Re-roll: release the FID's assignment at a specific slot and pick a new one.
+ * Returns null if no more are available.
+ */
+export function reassignByTierForSlot(fid: number, mintSlot: number, tier: string): number | null {
+  const store = loadStore();
+  const indices = getIndicesForFid(store, fid);
+
+  // Release the assignment at this slot if it exists
+  if (mintSlot < indices.length) {
+    const releasedIdx = indices[mintSlot];
+    store.claimedIndices = store.claimedIndices.filter((i) => i !== releasedIdx);
+    indices.splice(mintSlot, 1); // Remove so it gets re-filled below
+    setIndicesForFid(store, fid, indices);
     saveStore(store);
   }
 
-  // Clear tier cache isn't needed — we re-read claimed from store
-  // Now assign a new one in the requested tier
-  return getOrAssignByTier(fid, tier);
+  // Now assign a new one at this slot
+  return getOrAssignByTierForSlot(fid, mintSlot, tier);
+}
+
+/**
+ * Backward-compatible wrapper — re-rolls first slot.
+ */
+export function reassignByTier(fid: number, tier: string): number | null {
+  return reassignByTierForSlot(fid, 0, tier);
 }
