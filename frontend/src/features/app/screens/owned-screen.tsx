@@ -144,7 +144,7 @@ export function OwnedScreen({ fid, username, pfpUrl, onMintAnother, onHome }: Ow
               <div style={{ flex: 1 }}>
                 <ShareButton
                   text={`just dropped the craziest ${crustie.rarity} pizza NFT on Base 🍕🔥 Crustie #${crustie.tokenId} — "${crustie.vibe}" — generated from my Farcaster identity. no two are alike. mint yours 👇`}
-                  embeds={buildShareEmbeds({ imageUrl: crustie.imageUrl })}
+                  embeds={buildShareEmbeds({ tokenId: crustie.tokenId, imageUrl: crustie.imageUrl, vibe: crustie.vibe, rarity: crustie.rarity })}
                 >
                   Share 🍕
                 </ShareButton>
