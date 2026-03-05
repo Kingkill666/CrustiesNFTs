@@ -76,3 +76,32 @@ contract UpgradeScript is Script {
         vm.stopBroadcast();
     }
 }
+
+/// @notice Upgrades an existing CrustiesNFT proxy to V3 (adds free mint / whitelist feature).
+/// @dev Usage: PROXY_ADDRESS=0x... forge script script/Deploy.s.sol:UpgradeV3Script --rpc-url base --broadcast
+contract UpgradeV3Script is Script {
+    function run() public {
+        address proxyAddress = vm.envAddress("PROXY_ADDRESS");
+
+        vm.startBroadcast();
+
+        // Deploy the new implementation
+        CrustiesNFT newImplementation = new CrustiesNFT();
+
+        // Encode the V3 re-initializer call
+        bytes memory initV3Data = abi.encodeCall(
+            CrustiesNFT.initializeV3,
+            ()
+        );
+
+        // Upgrade the proxy and call initializeV3
+        CrustiesNFT proxy = CrustiesNFT(proxyAddress);
+        proxy.upgradeToAndCall(address(newImplementation), initV3Data);
+
+        console.log("=== CrustiesNFT Upgraded to V3 (Free Mint) ===");
+        console.log("Proxy address:             ", proxyAddress);
+        console.log("New implementation address: ", address(newImplementation));
+
+        vm.stopBroadcast();
+    }
+}

@@ -9,7 +9,7 @@ export type Screen =
 
 export type RarityTier = 'Common' | 'Uncommon' | 'Rare' | 'Epic' | 'Legendary';
 
-export type PaymentMethod = 'eth' | 'usdc';
+export type PaymentMethod = 'eth' | 'usdc' | 'free';
 
 export interface Trait {
   label: string;

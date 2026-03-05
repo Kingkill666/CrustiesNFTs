@@ -127,6 +127,30 @@ export const CRUSTIES_ABI = [
     inputs: [{ name: "tokenId", type: "uint256" }],
     outputs: [{ name: "", type: "address" }],
   },
+  {
+    name: "freeMint",
+    type: "function",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "_tokenURI", type: "string" },
+      { name: "signature", type: "bytes" },
+    ],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+  {
+    name: "hasFreeMint",
+    type: "function",
+    stateMutability: "view",
+    inputs: [{ name: "wallet", type: "address" }],
+    outputs: [{ name: "", type: "bool" }],
+  },
+  {
+    name: "remainingFreeMints",
+    type: "function",
+    stateMutability: "view",
+    inputs: [{ name: "wallet", type: "address" }],
+    outputs: [{ name: "", type: "uint256" }],
+  },
 ] as const;
 
 export const ERC20_ABI = [

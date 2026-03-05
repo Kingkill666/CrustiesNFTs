@@ -41,6 +41,7 @@ contract CrustiesNFT is
     error InvalidSignature();
     error MetadataIsFrozen();
     error ZeroAddress();
+    error NoFreeMintAllowance();
 
     // ==================== State Variables ====================
 
@@ -60,11 +61,16 @@ contract CrustiesNFT is
     bool public metadataFrozen;
     string public contractURI;
 
+    // V3 state variables
+    mapping(address => uint256) public freeMintAllowance;
+    uint256 public totalFreeMints;
+
     // ==================== Events ====================
 
     event Minted(address indexed to, uint256 indexed tokenId, string paymentType);
     event SignerUpdated(address indexed oldSigner, address indexed newSigner);
     event MetadataFrozen();
+    event FreeMintAllowanceSet(address indexed wallet, uint256 allowance);
 
     // ==================== Constants ====================
 
@@ -119,6 +125,11 @@ contract CrustiesNFT is
 
         if (_signer == address(0)) revert ZeroAddress();
         signer = _signer;
+    }
+
+    /// @notice Re-initializer for upgrading from V2 to V3 (free mint feature)
+    function initializeV3() public reinitializer(3) {
+        // No new init needed — mappings and counters default to 0
     }
 
     // ==================== Signature Verification ====================
@@ -192,6 +203,28 @@ contract CrustiesNFT is
         return tokenId;
     }
 
+    function freeMint(
+        string calldata _tokenURI,
+        bytes calldata signature
+    ) external whenNotPaused nonReentrant returns (uint256) {
+        if (freeMintAllowance[msg.sender] == 0) revert NoFreeMintAllowance();
+        if (!canMint(msg.sender)) revert CannotMint();
+
+        _verifyMintPermit(msg.sender, _tokenURI, signature);
+
+        freeMintAllowance[msg.sender]--;
+        totalFreeMints++;
+
+        uint256 tokenId = ++totalMinted;
+        _safeMint(msg.sender, tokenId);
+        _setTokenURI(tokenId, _tokenURI);
+        mintCount[msg.sender]++;
+
+        emit Minted(msg.sender, tokenId, "free");
+        emit MetadataUpdate(tokenId);
+        return tokenId;
+    }
+
     // ==================== View Functions ====================
 
     function canMint(address wallet) public view returns (bool) {
@@ -205,6 +238,14 @@ contract CrustiesNFT is
 
     function remainingSupply() external view returns (uint256) {
         return maxSupply - totalMinted;
+    }
+
+    function hasFreeMint(address wallet) external view returns (bool) {
+        return freeMintAllowance[wallet] > 0;
+    }
+
+    function remainingFreeMints(address wallet) external view returns (uint256) {
+        return freeMintAllowance[wallet];
     }
 
     // ==================== Admin Functions (onlyOwner) ====================
@@ -263,6 +304,13 @@ contract CrustiesNFT is
         contractURI = _contractURI;
     }
 
+    function setFreeMintAllowance(address[] calldata wallets, uint256 allowance) external onlyOwner {
+        for (uint256 i = 0; i < wallets.length; i++) {
+            freeMintAllowance[wallets[i]] = allowance;
+            emit FreeMintAllowanceSet(wallets[i], allowance);
+        }
+    }
+
     // ==================== Metadata Freeze Override ====================
 
     function _setTokenURI(uint256 tokenId, string memory _tokenURI) internal override {
@@ -312,6 +360,7 @@ contract CrustiesNFT is
     }
 
     // ==================== Storage Gap ====================
-    // Original 50 reduced by 3 new state variables (signer, metadataFrozen, contractURI).
-    uint256[47] private __gap;
+    // Original 50 reduced by 3 V2 vars (signer, metadataFrozen, contractURI)
+    // and 2 V3 vars (freeMintAllowance, totalFreeMints).
+    uint256[45] private __gap;
 }

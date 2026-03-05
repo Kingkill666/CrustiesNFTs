@@ -16,11 +16,114 @@ interface MintScreenProps {
   preparing?: boolean;
   /** Error message to display */
   error?: string;
+  /** True if user has a free mint allowance */
+  isFreeMint?: boolean;
 }
 
-export function MintScreen({ onConfirm, onHome, preparing, error }: MintScreenProps) {
+export function MintScreen({ onConfirm, onHome, preparing, error, isFreeMint }: MintScreenProps) {
   const [payment, setPayment] = useState<PaymentMethod>('eth');
   const isEth = payment === 'eth';
+
+  // Free mint mode: skip payment selector entirely
+  if (isFreeMint) {
+    return (
+      <AppShell onHome={onHome}>
+
+        {/* Mystery Crustie teaser */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, paddingTop: 4 }}>
+          <div style={{
+            width: 130, height: 130, borderRadius: 130 * 0.22,
+            background: `linear-gradient(145deg, ${C.green}20 0%, #edf7f040 100%)`,
+            border: `3px dashed ${C.green}60`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 56,
+            boxShadow: `0 6px 0 ${C.green}20`,
+            animation: 'float-pizza 3.5s ease-in-out infinite',
+          }}>
+            🏆
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <p style={{ fontFamily: F.display, fontSize: 20, color: C.green, margin: '0 0 4px', letterSpacing: 1 }}>
+              Pizza Party Winner!
+            </p>
+            <p style={{ fontSize: 12, color: C.muted, margin: 0, fontWeight: 600 }}>
+              Your free Crustie is waiting — just confirm with your wallet
+            </p>
+          </div>
+        </div>
+
+        <Card>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {([
+              { lbl: 'Crustie NFT',  val: 'FREE',        color: C.green   },
+              { lbl: 'IPFS storage', val: 'Included',     color: C.green   },
+              { lbl: 'Network',      val: 'Base Mainnet', color: '#3b82f6' },
+              { lbl: 'Gas estimate', val: '< $0.01',      color: C.muted   },
+            ] as { lbl: string; val: string; color: string }[]).map(({ lbl, val, color }) => (
+              <div key={lbl} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <p style={{ color: C.muted, margin: 0, fontSize: 13, fontWeight: 600 }}>{lbl}</p>
+                <p style={{ fontFamily: F.body, fontWeight: 700, margin: 0, fontSize: 13, color }}>{val}</p>
+              </div>
+            ))}
+            <div style={{
+              borderTop: `2px dashed ${C.border}`, paddingTop: 12, marginTop: 2,
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            }}>
+              <p style={{ fontWeight: 800, margin: 0, fontSize: 14, color: C.charcoal }}>Total</p>
+              <p style={{ fontFamily: F.display, fontSize: 26, letterSpacing: 1, margin: 0, color: C.green }}>
+                FREE
+              </p>
+            </div>
+          </div>
+        </Card>
+
+        {/* Error banner */}
+        {error && (
+          <div style={{
+            borderRadius: 14, background: '#fff0f0', border: `2px solid ${C.red}40`, padding: '12px 14px',
+            display: 'flex', gap: 10, alignItems: 'center',
+          }}>
+            <span style={{ fontSize: 20, flexShrink: 0 }}>❌</span>
+            <div>
+              <p style={{ fontFamily: F.body, fontWeight: 800, color: C.red, margin: '0 0 2px', fontSize: 13 }}>{error}</p>
+              <p style={{ fontSize: 11, color: C.muted, margin: 0, fontWeight: 600 }}>Your wallet was not charged. Try again.</p>
+            </div>
+          </div>
+        )}
+
+        <button
+          onClick={() => !preparing && onConfirm('free')}
+          disabled={preparing}
+          style={{
+            width: '100%', borderRadius: 18,
+            border: `2.5px solid ${C.green}`,
+            background: preparing
+              ? `linear-gradient(160deg, ${C.green}90 0%, #1a5c3a90 100%)`
+              : `linear-gradient(160deg, ${C.green} 0%, #1a5c3a 100%)`,
+            padding: '18px 16px', cursor: preparing ? 'not-allowed' : 'pointer',
+            boxShadow: `0 4px 0 #1a5c3a`,
+            minHeight: 62,
+            opacity: preparing ? 0.85 : 1,
+            transition: 'all 0.2s ease',
+          }}
+        >
+          <p style={{ color: '#fff', fontWeight: 900, fontSize: 20, margin: 0, fontFamily: F.display, letterSpacing: 0.5 }}>
+            {preparing ? '🍕 Preparing Your Crustie...' : '🍕 Bake My Crustie For Free'}
+          </p>
+          <p style={{ color: 'rgba(255,255,255,0.72)', fontSize: 12, margin: '4px 0 0', fontWeight: 600 }}>
+            {preparing
+              ? 'Generating your NFT — wallet will prompt shortly'
+              : 'Wallet will prompt for gas only (< $0.01)'}
+          </p>
+        </button>
+
+        <p style={{ fontSize: 11, color: C.muted, textAlign: 'center', fontWeight: 600, lineHeight: 1.5 }}>
+          Your Crustie is revealed after minting 🍕
+        </p>
+
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell onHome={onHome}>
@@ -138,7 +241,7 @@ export function MintScreen({ onConfirm, onHome, preparing, error }: MintScreenPr
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {([
             { lbl: 'Crustie NFT',  val: isEth ? '0.001 ETH' : '$3.00 USDC', color: C.charcoal },
-            { lbl: 'IPFS storage', val: 'Included ✅',                        color: C.green    },
+            { lbl: 'IPFS storage', val: 'Included',                           color: C.green    },
             { lbl: 'Network',      val: 'Base Mainnet',                       color: '#3b82f6'  },
             { lbl: 'Gas estimate', val: '< $0.01',                            color: C.muted    },
           ] as { lbl: string; val: string; color: string }[]).map(({ lbl, val, color }) => (

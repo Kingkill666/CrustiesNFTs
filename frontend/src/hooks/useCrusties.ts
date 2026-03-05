@@ -14,6 +14,7 @@ interface GeneratedData {
   crustieIndex?: number;
   signature?: string;
   nonce?: string;
+  isFreeMint?: boolean;
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
@@ -71,6 +72,14 @@ export function useCrusties() {
     abi: CRUSTIES_ABI,
     functionName: "minTokenPrice",
     query: { enabled: CRUSTIES_CONTRACT_ADDRESS !== "0x" },
+  });
+
+  const { data: isFreeMintEligible } = useReadContract({
+    address: CRUSTIES_CONTRACT_ADDRESS,
+    abi: CRUSTIES_ABI,
+    functionName: "hasFreeMint",
+    args: address ? [address] : undefined,
+    query: { enabled: !!address && CRUSTIES_CONTRACT_ADDRESS !== "0x" },
   });
 
   const generate = useCallback(async (fid?: number, minterAddress?: string): Promise<GeneratedData | null> => {
@@ -142,5 +151,6 @@ export function useCrusties() {
     totalMinted,
     minEthPrice,
     minTokenPrice,
+    isFreeMintEligible: !!isFreeMintEligible,
   };
 }

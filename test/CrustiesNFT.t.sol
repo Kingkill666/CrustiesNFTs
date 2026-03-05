@@ -793,4 +793,196 @@ contract CrustiesNFTTest is Test {
         assertEq(treasury.balance, MIN_ETH_PRICE);
         assertEq(usdc.balanceOf(treasury), MIN_TOKEN_PRICE);
     }
+
+    // ==================== Free Mint ====================
+
+    function test_FreeMint() public {
+        // Owner grants alice 1 free mint
+        address[] memory wallets = new address[](1);
+        wallets[0] = alice;
+        nft.setFreeMintAllowance(wallets, 1);
+
+        assertTrue(nft.hasFreeMint(alice));
+        assertEq(nft.remainingFreeMints(alice), 1);
+
+        bytes memory sig = _signMintPermit(signerPrivateKey, alice, TOKEN_URI, 0);
+
+        vm.prank(alice);
+        uint256 tokenId = nft.freeMint(TOKEN_URI, sig);
+
+        assertEq(tokenId, 1);
+        assertEq(nft.ownerOf(1), alice);
+        assertEq(nft.tokenURI(1), TOKEN_URI);
+        assertEq(nft.totalMinted(), 1);
+        assertEq(nft.mintCount(alice), 1);
+        assertEq(nft.totalFreeMints(), 1);
+        assertEq(nft.remainingFreeMints(alice), 0);
+        assertFalse(nft.hasFreeMint(alice));
+        // Treasury should NOT receive any ETH or USDC
+        assertEq(treasury.balance, 0);
+        assertEq(usdc.balanceOf(treasury), 0);
+    }
+
+    function test_FreeMint_EmitsMinted() public {
+        address[] memory wallets = new address[](1);
+        wallets[0] = alice;
+        nft.setFreeMintAllowance(wallets, 1);
+
+        bytes memory sig = _signMintPermit(signerPrivateKey, alice, TOKEN_URI, 0);
+
+        vm.expectEmit(true, true, false, true);
+        emit CrustiesNFT.Minted(alice, 1, "free");
+
+        vm.prank(alice);
+        nft.freeMint(TOKEN_URI, sig);
+    }
+
+    function test_FreeMint_RevertsWithoutAllowance() public {
+        assertFalse(nft.hasFreeMint(alice));
+
+        bytes memory sig = _signMintPermit(signerPrivateKey, alice, TOKEN_URI, 0);
+
+        vm.prank(alice);
+        vm.expectRevert(CrustiesNFT.NoFreeMintAllowance.selector);
+        nft.freeMint(TOKEN_URI, sig);
+    }
+
+    function test_FreeMint_RevertsAtWalletCap() public {
+        // Give alice 4 free mints but wallet cap is 3
+        address[] memory wallets = new address[](1);
+        wallets[0] = alice;
+        nft.setFreeMintAllowance(wallets, 4);
+
+        vm.startPrank(alice);
+        bytes memory s0 = _signMintPermit(signerPrivateKey, alice, "ipfs://1", 0);
+        bytes memory s1 = _signMintPermit(signerPrivateKey, alice, "ipfs://2", 1);
+        bytes memory s2 = _signMintPermit(signerPrivateKey, alice, "ipfs://3", 2);
+        bytes memory s3 = _signMintPermit(signerPrivateKey, alice, "ipfs://4", 3);
+
+        nft.freeMint("ipfs://1", s0);
+        nft.freeMint("ipfs://2", s1);
+        nft.freeMint("ipfs://3", s2);
+
+        vm.expectRevert(CrustiesNFT.CannotMint.selector);
+        nft.freeMint("ipfs://4", s3);
+        vm.stopPrank();
+    }
+
+    function test_FreeMint_RequiresSignature() public {
+        address[] memory wallets = new address[](1);
+        wallets[0] = alice;
+        nft.setFreeMintAllowance(wallets, 1);
+
+        uint256 wrongKey = 0xBAD;
+        bytes memory badSig = _signMintPermit(wrongKey, alice, TOKEN_URI, 0);
+
+        vm.prank(alice);
+        vm.expectRevert(CrustiesNFT.InvalidSignature.selector);
+        nft.freeMint(TOKEN_URI, badSig);
+    }
+
+    function test_FreeMint_WhenPaused_Reverts() public {
+        address[] memory wallets = new address[](1);
+        wallets[0] = alice;
+        nft.setFreeMintAllowance(wallets, 1);
+        nft.pause();
+
+        bytes memory sig = _signMintPermit(signerPrivateKey, alice, TOKEN_URI, 0);
+
+        vm.prank(alice);
+        vm.expectRevert(PausableUpgradeable.EnforcedPause.selector);
+        nft.freeMint(TOKEN_URI, sig);
+    }
+
+    function test_FreeMint_MultipleAllowance() public {
+        // Give alice 2 free mints
+        address[] memory wallets = new address[](1);
+        wallets[0] = alice;
+        nft.setFreeMintAllowance(wallets, 2);
+
+        assertEq(nft.remainingFreeMints(alice), 2);
+
+        bytes memory s0 = _signMintPermit(signerPrivateKey, alice, TOKEN_URI, 0);
+        bytes memory s1 = _signMintPermit(signerPrivateKey, alice, TOKEN_URI_2, 1);
+
+        vm.startPrank(alice);
+        nft.freeMint(TOKEN_URI, s0);
+        assertEq(nft.remainingFreeMints(alice), 1);
+
+        nft.freeMint(TOKEN_URI_2, s1);
+        assertEq(nft.remainingFreeMints(alice), 0);
+        vm.stopPrank();
+
+        assertEq(nft.totalFreeMints(), 2);
+        assertEq(nft.totalMinted(), 2);
+    }
+
+    function test_FreeMint_MixedWithPaidMint() public {
+        // Alice gets 1 free mint, then does 1 paid mint
+        address[] memory wallets = new address[](1);
+        wallets[0] = alice;
+        nft.setFreeMintAllowance(wallets, 1);
+
+        bytes memory s0 = _signMintPermit(signerPrivateKey, alice, TOKEN_URI, 0);
+        bytes memory s1 = _signMintPermit(signerPrivateKey, alice, TOKEN_URI_2, 1);
+
+        vm.startPrank(alice);
+        nft.freeMint(TOKEN_URI, s0);
+        nft.mintWithETH{value: MIN_ETH_PRICE}(TOKEN_URI_2, s1);
+        vm.stopPrank();
+
+        assertEq(nft.totalMinted(), 2);
+        assertEq(nft.mintCount(alice), 2);
+        assertEq(nft.totalFreeMints(), 1);
+        assertEq(treasury.balance, MIN_ETH_PRICE);
+    }
+
+    // ==================== Free Mint Admin ====================
+
+    function test_SetFreeMintAllowance_Batch() public {
+        address[] memory wallets = new address[](2);
+        wallets[0] = alice;
+        wallets[1] = bob;
+        nft.setFreeMintAllowance(wallets, 1);
+
+        assertTrue(nft.hasFreeMint(alice));
+        assertTrue(nft.hasFreeMint(bob));
+        assertEq(nft.remainingFreeMints(alice), 1);
+        assertEq(nft.remainingFreeMints(bob), 1);
+    }
+
+    function test_SetFreeMintAllowance_EmitsEvent() public {
+        address[] memory wallets = new address[](1);
+        wallets[0] = alice;
+
+        vm.expectEmit(true, false, false, true);
+        emit CrustiesNFT.FreeMintAllowanceSet(alice, 2);
+
+        nft.setFreeMintAllowance(wallets, 2);
+    }
+
+    function test_SetFreeMintAllowance_CanRevoke() public {
+        address[] memory wallets = new address[](1);
+        wallets[0] = alice;
+
+        nft.setFreeMintAllowance(wallets, 1);
+        assertTrue(nft.hasFreeMint(alice));
+
+        nft.setFreeMintAllowance(wallets, 0);
+        assertFalse(nft.hasFreeMint(alice));
+    }
+
+    function test_SetFreeMintAllowance_RevertsNonOwner() public {
+        address[] memory wallets = new address[](1);
+        wallets[0] = alice;
+
+        vm.prank(alice);
+        vm.expectRevert();
+        nft.setFreeMintAllowance(wallets, 1);
+    }
+
+    function test_HasFreeMint_DefaultFalse() public view {
+        assertFalse(nft.hasFreeMint(alice));
+        assertEq(nft.remainingFreeMints(alice), 0);
+    }
 }

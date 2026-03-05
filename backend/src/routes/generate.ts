@@ -8,7 +8,7 @@ import {
 } from "../assignment.js";
 import { getPrePinnedUri, getCuratedTraits } from "../ipfs-lookup.js";
 import { signMintPermit } from "../signer.js";
-import { getNonce, getMintCount } from "../nonce.js";
+import { getNonce, getMintCount, getFreeMintStatus } from "../nonce.js";
 import { fetchFarcasterUser } from "../farcaster.js";
 import { fetchOnChainData } from "../onchain.js";
 import { computeTraits, rarityScoreToTier } from "../personality.js";
@@ -44,11 +44,21 @@ generateRoute.post("/generate", async (c) => {
       console.log("[generate] On-chain mintCount for", minterAddress, "=", mintSlot);
     }
 
+    // ── Check free mint eligibility ─────────────────────────────────────
+    let isFreeMint = false;
+    if (
+      minterAddress &&
+      minterAddress !== "0x0000000000000000000000000000000000000000"
+    ) {
+      isFreeMint = await getFreeMintStatus(minterAddress as Hex);
+      console.log("[generate] Free mint status for", minterAddress, "=", isFreeMint);
+    }
+
     // ── Fast path: FID already has an assignment for this slot ────────────
     const existingAssignments = getAssignments(fid);
     if (mintSlot < existingAssignments.length && !forceRegenerate) {
       console.log("[generate] Returning cached assignment for fid", fid, "slot", mintSlot);
-      return c.json(await buildResponse(existingAssignments[mintSlot], fid, minterAddress));
+      return c.json(await buildResponse(existingAssignments[mintSlot], fid, minterAddress, null, undefined, isFreeMint));
     }
 
     // ── Dynamic personality pipeline ────────────────────────────────────
@@ -107,7 +117,7 @@ generateRoute.post("/generate", async (c) => {
     }
 
     return c.json(
-      await buildResponse(crustieIndex, fid, minterAddress, personalityTraits, rarityTier)
+      await buildResponse(crustieIndex, fid, minterAddress, personalityTraits, rarityTier, isFreeMint)
     );
   } catch (err) {
     console.error("[generate] FAILED:", err);
@@ -121,7 +131,8 @@ async function buildResponse(
   fid: number,
   minterAddress?: string,
   personalityTraits?: CrustiesTraits | null,
-  rarityTier?: string
+  rarityTier?: string,
+  isFreeMint?: boolean
 ) {
   const crustieNumber = indexToCrustieNumber(crustieIndex);
   console.log("[generate] Crustie number:", crustieNumber);
@@ -182,6 +193,7 @@ async function buildResponse(
     // Include personality data when available
     ...(personalityTraits && { personalityTraits }),
     ...(rarityTier && { rarityTier }),
+    isFreeMint: !!isFreeMint,
   };
 
   console.log("[generate] Response:", {

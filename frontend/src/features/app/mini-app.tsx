@@ -41,7 +41,7 @@ export function MiniApp() {
 
   const { address } = useAccount();
   const { fid, username, pfpUrl } = useFarcasterContext();
-  const { generate, minEthPrice, minTokenPrice } = useCrusties();
+  const { generate, minEthPrice, minTokenPrice, isFreeMintEligible } = useCrusties();
 
   // ── ETH mint: single contract write ───────────────────────────────────────
   const {
@@ -264,7 +264,19 @@ export function MiniApp() {
 
       // Step 2: Fire the wallet prompt — user is still on the mint screen
       // The useEffect above will transition to 'minting' when isPending flips true
-      if (method === 'eth') {
+      if (method === 'free') {
+        console.log('[MiniApp] Calling writeMint (freeMint)', {
+          contract: CRUSTIES_CONTRACT_ADDRESS,
+          uri,
+          sigPrefix: sigBytes.slice(0, 20),
+        });
+        writeMint({
+          address: CRUSTIES_CONTRACT_ADDRESS,
+          abi: CRUSTIES_ABI,
+          functionName: 'freeMint',
+          args: [uri, sigBytes],
+        });
+      } else if (method === 'eth') {
         console.log('[MiniApp] Calling writeMint (mintWithETH)', {
           contract: CRUSTIES_CONTRACT_ADDRESS,
           uri,
@@ -328,7 +340,7 @@ export function MiniApp() {
   // ── Screen rendering ────────────────────────────────────────────────────────
 
   if (screen === 'landing') {
-    return <LandingScreen onStart={handleStart} onViewOwned={handleViewOwned} />;
+    return <LandingScreen onStart={handleStart} onViewOwned={handleViewOwned} isFreeMint={isFreeMintEligible} />;
   }
 
   if (screen === 'mint') {
@@ -338,6 +350,7 @@ export function MiniApp() {
         onHome={goLanding}
         preparing={pipeline.preparing}
         error={pipeline.error}
+        isFreeMint={isFreeMintEligible}
       />
     );
   }

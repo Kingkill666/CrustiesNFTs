@@ -43,7 +43,7 @@ function HowStep({
 
 // ─── LandingScreen ────────────────────────────────────────────────────────────
 
-export function LandingScreen({ onStart, onViewOwned }: { onStart: () => void; onViewOwned: () => void }) {
+export function LandingScreen({ onStart, onViewOwned, isFreeMint }: { onStart: () => void; onViewOwned: () => void; isFreeMint?: boolean }) {
   const { total, minted } = useSupply();
   const { entries: gallery, isLoading: galleryLoading } = useGallery(10);
   const pct = total > 0 ? Math.min((minted / total) * 100, 100) : 0;
@@ -159,16 +159,42 @@ export function LandingScreen({ onStart, onViewOwned }: { onStart: () => void; o
         </p>
       </div>
 
+      {/* ── Free mint banner ───────────────────────────────────────────────── */}
+      {isFreeMint && (
+        <div style={{
+          borderRadius: 16,
+          background: `linear-gradient(135deg, ${C.green}15 0%, #edf7f0 100%)`,
+          border: `2.5px solid ${C.green}60`,
+          padding: '12px 16px',
+          display: 'flex', alignItems: 'center', gap: 10,
+          boxShadow: `3px 3px 0 ${C.green}20`,
+        }}>
+          <span style={{ fontSize: 28, flexShrink: 0 }}>🏆</span>
+          <div>
+            <p style={{ fontFamily: F.display, fontSize: 16, color: C.green, margin: '0 0 2px', letterSpacing: 1 }}>
+              Pizza Party Winner!
+            </p>
+            <p style={{ fontSize: 12, color: C.muted, margin: 0, fontWeight: 600 }}>
+              You've earned a free Crustie — just pay gas
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* ── Primary CTA ───────────────────────────────────────────────────────── */}
       <button
         onClick={onStart}
         style={{
           width: '100%', borderRadius: 20,
-          border: `2.5px solid ${C.orangeD}`,
-          background: `linear-gradient(160deg, ${C.orange} 0%, ${C.orangeD} 100%)`,
+          border: `2.5px solid ${isFreeMint ? C.green : C.orangeD}`,
+          background: isFreeMint
+            ? `linear-gradient(160deg, ${C.green} 0%, #1a5c3a 100%)`
+            : `linear-gradient(160deg, ${C.orange} 0%, ${C.orangeD} 100%)`,
           padding: '20px 16px',
           cursor: 'pointer',
-          boxShadow: `0 5px 0 ${C.orangeD}, 0 8px 20px rgba(196,73,0,0.35)`,
+          boxShadow: isFreeMint
+            ? `0 5px 0 #1a5c3a, 0 8px 20px rgba(45,106,79,0.35)`
+            : `0 5px 0 ${C.orangeD}, 0 8px 20px rgba(196,73,0,0.35)`,
           minHeight: 70,
         }}
       >
@@ -176,10 +202,10 @@ export function LandingScreen({ onStart, onViewOwned }: { onStart: () => void; o
           color: '#fff', fontWeight: 400, fontSize: 26,
           margin: 0, fontFamily: F.display, letterSpacing: 1,
         }}>
-          🍕 Bake My Crustie
+          {isFreeMint ? '🍕 Bake My Crustie For Free' : '🍕 Bake My Crustie'}
         </p>
         <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: 13, margin: '5px 0 0', fontWeight: 600, fontFamily: F.body }}>
-          Mint with 0.001 ETH or $3 USDC · revealed after minting
+          {isFreeMint ? 'Free mint — gas only (< $0.01)' : 'Mint with 0.001 ETH or $3 USDC · revealed after minting'}
         </p>
       </button>
 
@@ -404,11 +430,15 @@ export function LandingScreen({ onStart, onViewOwned }: { onStart: () => void; o
         onClick={onStart}
         style={{
           width: '100%', borderRadius: 20,
-          border: `2.5px solid ${C.orangeD}`,
-          background: `linear-gradient(160deg, ${C.orange} 0%, ${C.orangeD} 100%)`,
+          border: `2.5px solid ${isFreeMint ? C.green : C.orangeD}`,
+          background: isFreeMint
+            ? `linear-gradient(160deg, ${C.green} 0%, #1a5c3a 100%)`
+            : `linear-gradient(160deg, ${C.orange} 0%, ${C.orangeD} 100%)`,
           padding: '20px 16px',
           cursor: 'pointer',
-          boxShadow: `0 5px 0 ${C.orangeD}, 0 8px 20px rgba(196,73,0,0.35)`,
+          boxShadow: isFreeMint
+            ? `0 5px 0 #1a5c3a, 0 8px 20px rgba(45,106,79,0.35)`
+            : `0 5px 0 ${C.orangeD}, 0 8px 20px rgba(196,73,0,0.35)`,
           minHeight: 70,
         }}
       >
@@ -416,10 +446,10 @@ export function LandingScreen({ onStart, onViewOwned }: { onStart: () => void; o
           color: '#fff', fontWeight: 400, fontSize: 26,
           margin: 0, fontFamily: F.display, letterSpacing: 1,
         }}>
-          🍕 Bake My Crustie
+          {isFreeMint ? '🍕 Bake My Crustie For Free' : '🍕 Bake My Crustie'}
         </p>
         <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: 13, margin: '5px 0 0', fontWeight: 600, fontFamily: F.body }}>
-          Mint with 0.001 ETH or $3 USDC · revealed after minting
+          {isFreeMint ? 'Free mint — gas only (< $0.01)' : 'Mint with 0.001 ETH or $3 USDC · revealed after minting'}
         </p>
       </button>
 

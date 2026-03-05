@@ -60,3 +60,31 @@ export async function getMintCount(minterAddress: Hex): Promise<bigint> {
 
   return count;
 }
+
+const HAS_FREE_MINT_ABI = [
+  {
+    name: "hasFreeMint",
+    type: "function",
+    stateMutability: "view",
+    inputs: [{ name: "wallet", type: "address" }],
+    outputs: [{ name: "", type: "bool" }],
+  },
+] as const;
+
+/**
+ * Check if a wallet has a free mint allowance on-chain.
+ */
+export async function getFreeMintStatus(minterAddress: Hex): Promise<boolean> {
+  if (!CRUSTIES_CONTRACT_ADDRESS || CRUSTIES_CONTRACT_ADDRESS === "0x") {
+    return false;
+  }
+
+  const hasFree = await client.readContract({
+    address: CRUSTIES_CONTRACT_ADDRESS,
+    abi: HAS_FREE_MINT_ABI,
+    functionName: "hasFreeMint",
+    args: [minterAddress],
+  });
+
+  return hasFree;
+}
