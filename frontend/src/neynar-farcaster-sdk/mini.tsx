@@ -7,8 +7,7 @@ const MINIAPP_URL = 'https://farcaster.xyz/miniapps/b8-LN08vo1G6/crusties';
 
 /**
  * Build share embeds for composeCast.
- * Returns [imageUrl, miniAppUrl] so the cast shows the NFT image
- * and a clickable link to open the Crusties mini app.
+ * NFT image first (primary card), mini app link second.
  */
 export function buildShareEmbeds(opts?: {
   imageUrl?: string;
