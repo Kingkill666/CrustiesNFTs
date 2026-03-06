@@ -31,6 +31,7 @@ export interface OwnedCrustie {
   tokenId: number;
   imageUrl: string;
   vibe: string;
+  name: string;
   rarity: RarityTier;
   txHash?: string;
   tokenURI?: string;

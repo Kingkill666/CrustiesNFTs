@@ -23,6 +23,7 @@ interface PipelineState {
   tokenURI?: string;
   signature?: string;
   vibe?: string;
+  name?: string;
   rarity?: 'Common' | 'Uncommon' | 'Rare' | 'Epic' | 'Legendary';
   tokenId?: number;
   txHash?: string;
@@ -251,6 +252,7 @@ export function MiniApp() {
         tokenURI: uri,
         signature: sig,
         vibe: data.traits?.vibe as string | undefined,
+        name: (data.traits?.name || data.traits?.vibe) as string | undefined,
         rarity: data.traits?.rarity as PipelineState['rarity'],
       }));
 
@@ -371,6 +373,7 @@ export function MiniApp() {
     return (
       <SuccessScreen
         vibe={pipeline.vibe}
+        name={pipeline.name}
         rarity={pipeline.rarity}
         txHash={pipeline.txHash}
         tokenId={pipeline.tokenId}

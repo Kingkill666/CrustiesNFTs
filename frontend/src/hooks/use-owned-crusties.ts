@@ -103,6 +103,7 @@ export function useOwnedCrusties(_fid?: number) {
             // Fetch the metadata JSON from IPFS
             let imageUrl = '';
             let vibe = 'Classic Crustie';
+            let name = '';
             let rarity: RarityTier = 'Common';
 
             try {
@@ -111,10 +112,11 @@ export function useOwnedCrusties(_fid?: number) {
               if (res.ok) {
                 const metadata = await res.json();
                 imageUrl = metadata.image ? ipfsToHttp(metadata.image) : '';
-                // Extract vibe and rarity from attributes
+                // Extract vibe, name, and rarity from attributes
                 if (Array.isArray(metadata.attributes)) {
                   for (const attr of metadata.attributes) {
                     if (attr.trait_type === 'Vibe') vibe = attr.value;
+                    if (attr.trait_type === 'Name') name = attr.value;
                     if (attr.trait_type === 'Rarity') rarity = attr.value as RarityTier;
                   }
                 }
@@ -127,6 +129,7 @@ export function useOwnedCrusties(_fid?: number) {
               tokenId: Number(tokenId),
               imageUrl,
               vibe,
+              name: name || vibe,
               rarity,
               tokenURI: uri,
             });

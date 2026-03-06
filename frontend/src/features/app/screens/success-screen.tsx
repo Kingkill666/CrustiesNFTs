@@ -10,6 +10,7 @@ import type { RarityTier } from '@/features/app/types';
 interface SuccessScreenProps {
   tokenId?: number;
   vibe?: string;
+  name?: string;
   rarity?: RarityTier;
   txHash?: string;
   tokenURI?: string;
@@ -48,7 +49,7 @@ function ConfettiPiece({ i }: { i: number }) {
 }
 
 export function SuccessScreen({
-  tokenId = 1848, vibe = 'Classic Crustie', rarity = 'Common',
+  tokenId = 1848, vibe = 'Classic Crustie', name, rarity = 'Common',
   txHash, tokenURI, imageUrl, username, onMintAnother, onViewOwned,
 }: SuccessScreenProps) {
   const r = RARITY_STYLES[rarity];
@@ -151,7 +152,7 @@ export function SuccessScreen({
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         <ShareButton
-          text={`just dropped the craziest ${rarity} pizza NFT on Base 🍕🔥 Crustie #${tokenId} — "${vibe}" — generated from my Farcaster identity. no two are alike. mint yours 👇`}
+          text={`just dropped the craziest ${rarity} pizza NFT on Base 🍕🔥 Crustie #${tokenId} — "${name || vibe}" — generated from my Farcaster identity. no two are alike. mint yours 👇`}
           embeds={buildShareEmbeds({ tokenId, imageUrl, vibe, rarity })}
         >
           Share My Crustie 🍕
