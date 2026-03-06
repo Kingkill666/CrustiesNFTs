@@ -15,8 +15,8 @@ export async function GET() {
   const manifestImages = {
     logo: `${baseUrl}/images/app-logo.png`,
     splash: `${baseUrl}/images/app-splash.png`,
-    hero: `${baseUrl}/images/app-new-hero.png`,
-    og: `${baseUrl}/images/app-new-hero.png`,
+    hero: `${baseUrl}/images/app-new-hero.jpg`,
+    og: `${baseUrl}/images/app-new-hero.jpg`,
   };
 
   return Response.json({

@@ -12,14 +12,14 @@ export async function generateMetadata(): Promise<Metadata> {
     other: {
       "fc:miniapp": JSON.stringify({
         version: "1",
-        imageUrl: `${APP_URL}/og-image.png`,
+        imageUrl: `${APP_URL}/images/app-new-hero.jpg`,
         button: {
           title: "Get Your Crustie Now",
           action: {
             type: "launch_miniapp",
             name: "Crusties",
             url: APP_URL,
-            splashImageUrl: `${APP_URL}/logo.png`,
+            splashImageUrl: `${APP_URL}/images/app-splash.png`,
             splashBackgroundColor: "#E85D04",
           },
         },
