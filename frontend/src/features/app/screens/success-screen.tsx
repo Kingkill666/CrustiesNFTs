@@ -152,7 +152,7 @@ export function SuccessScreen({
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         <ShareButton
-          text={`just dropped the craziest ${rarity} pizza NFT on Base 🍕🔥 Crustie #${tokenId} — "${name || vibe}" — generated from my Farcaster identity. no two are alike. mint yours 👇`}
+          text={`just dropped the craziest Pizza NFT on Base 🍕🔥 Crustie #${tokenId} — "${name || vibe}" — generated from my Farcaster identity. no two are alike. mint yours 👇`}
           embeds={buildShareEmbeds({ tokenId, imageUrl, vibe, rarity })}
         >
           Share My Crustie 🍕
