@@ -237,8 +237,8 @@ export function MiniApp() {
         return;
       }
 
-      const sig = data.signature as string | undefined;
-      const uri = data.ipfsUri;
+      let sig = data.signature as string | undefined;
+      let uri = data.ipfsUri;
 
       console.log('[MiniApp] Backend data:', {
         ipfsUri: uri,
@@ -263,7 +263,7 @@ export function MiniApp() {
         return;
       }
 
-      const sigBytes = sig as `0x${string}`;
+      let sigBytes = sig as `0x${string}`;
 
       // Step 2: Check balance before firing wallet prompt
       if (method !== 'free' && publicClient && address) {
@@ -291,7 +291,28 @@ export function MiniApp() {
         }
       }
 
-      // Step 3: Fire the wallet prompt — user is still on the mint screen
+      // Step 3: Verify signature nonce is still valid (prevents stale signature reverts)
+      if (publicClient && address && data.nonce !== undefined) {
+        const onChainNonce = await publicClient.readContract({
+          address: CRUSTIES_CONTRACT_ADDRESS,
+          abi: CRUSTIES_ABI,
+          functionName: 'nonces',
+          args: [address],
+        });
+        if (String(onChainNonce) !== String(data.nonce)) {
+          console.warn('[MiniApp] Nonce mismatch — re-generating signature', { onChain: String(onChainNonce), signed: data.nonce });
+          const freshData = await generate(fid ?? undefined, address);
+          if (!freshData?.signature) {
+            setPipeline(p => ({ ...p, error: 'Failed to refresh mint signature. Please try again.', preparing: false }));
+            return;
+          }
+          sig = freshData.signature;
+          uri = freshData.ipfsUri;
+          sigBytes = sig as `0x${string}`;
+        }
+      }
+
+      // Step 4: Fire the wallet prompt — user is still on the mint screen
       // The useEffect above will transition to 'minting' when isPending flips true
       if (method === 'free') {
         console.log('[MiniApp] Calling writeMint (freeMint)', {
