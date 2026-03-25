@@ -180,7 +180,7 @@ async function buildResponse(
   // Convert ipfs:// URI to gateway URL for frontend display
   const imageGatewayUrl = prePinned.imageUri.replace(
     "ipfs://",
-    "https://ipfs.io/ipfs/"
+    "https://gateway.pinata.cloud/ipfs/"
   );
 
   const response = {

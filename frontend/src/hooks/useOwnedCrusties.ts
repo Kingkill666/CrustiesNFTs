@@ -7,7 +7,7 @@ import {
   CRUSTIES_ABI,
 } from "@/lib/contract";
 
-const IPFS_GATEWAY = "https://dweb.link/ipfs/";
+const IPFS_GATEWAY = "https://gateway.pinata.cloud/ipfs/";
 
 function resolveIpfsUrl(uri: string): string {
   if (uri.startsWith("ipfs://")) {

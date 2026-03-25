@@ -23,7 +23,7 @@ const client = createPublicClient({
 /** Convert ipfs:// URI to an HTTPS gateway URL */
 function ipfsToHttp(uri: string): string {
   if (uri.startsWith('ipfs://')) {
-    return uri.replace('ipfs://', 'https://dweb.link/ipfs/');
+    return uri.replace('ipfs://', 'https://gateway.pinata.cloud/ipfs/');
   }
   return uri;
 }

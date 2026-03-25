@@ -5,7 +5,7 @@ import { useAccount, usePublicClient } from 'wagmi';
 import { CRUSTIES_CONTRACT_ADDRESS, CRUSTIES_ABI } from '@/lib/contract';
 import type { OwnedCrustie, RarityTier } from '@/features/app/types';
 
-const IPFS_GATEWAY = 'https://dweb.link/ipfs/';
+const IPFS_GATEWAY = 'https://gateway.pinata.cloud/ipfs/';
 
 function ipfsToHttp(uri: string): string {
   if (uri.startsWith('ipfs://')) return IPFS_GATEWAY + uri.slice(7);

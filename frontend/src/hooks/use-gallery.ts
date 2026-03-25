@@ -5,7 +5,7 @@ import { usePublicClient } from 'wagmi';
 import { CRUSTIES_CONTRACT_ADDRESS, CRUSTIES_ABI } from '@/lib/contract';
 import type { GalleryEntry } from '@/features/app/types';
 
-const IPFS_GATEWAY = 'https://dweb.link/ipfs/';
+const IPFS_GATEWAY = 'https://gateway.pinata.cloud/ipfs/';
 const GALLERY_SIZE = 9;
 
 function ipfsToHttp(uri: string): string {
