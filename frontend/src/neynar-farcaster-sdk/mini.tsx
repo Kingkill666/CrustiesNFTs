@@ -4,12 +4,10 @@ import { sdk } from '@farcaster/miniapp-sdk';
 import { C, F } from '@/features/app/components/theme';
 
 const MINIAPP_URL = 'https://farcaster.xyz/miniapps/b8-LN08vo1G6/crusties';
-const APP_URL = process.env.NEXT_PUBLIC_URL || 'https://crusties-vmf-coin.vercel.app';
 
 /**
  * Build share embeds for composeCast.
- * Uses /api/image proxy (fast, reliable) instead of raw IPFS gateway URLs.
- * NFT image first (primary card), mini app link second.
+ * Image URL (dweb.link gateway) first, mini app link second.
  */
 export function buildShareEmbeds(opts?: {
   imageUrl?: string;
@@ -17,8 +15,9 @@ export function buildShareEmbeds(opts?: {
   vibe?: string;
   rarity?: string;
 }): [string] | [string, string] {
-  if (opts?.tokenId) {
-    return [`${APP_URL}/api/image?tokenId=${opts.tokenId}`, MINIAPP_URL];
+  const imageUrl = opts?.imageUrl;
+  if (imageUrl) {
+    return [imageUrl, MINIAPP_URL];
   }
   return [MINIAPP_URL];
 }
