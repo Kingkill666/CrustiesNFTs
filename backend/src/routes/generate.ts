@@ -180,7 +180,7 @@ async function buildResponse(
   // Convert ipfs:// URI to gateway URL for frontend display
   const imageGatewayUrl = prePinned.imageUri.replace(
     "ipfs://",
-    "https://dweb.link/ipfs/"
+    "https://ipfs.io/ipfs/"
   );
 
   const response = {
