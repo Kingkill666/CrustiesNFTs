@@ -7,7 +7,7 @@ import {
   CRUSTIES_ABI,
 } from "@/lib/contract";
 
-const IPFS_GATEWAY = "https://gateway.pinata.cloud/ipfs/";
+const IPFS_GATEWAY = "https://dweb.link/ipfs/";
 
 function resolveIpfsUrl(uri: string): string {
   if (uri.startsWith("ipfs://")) {
@@ -101,7 +101,7 @@ export function useOwnedCrusties() {
 
         const metadataUri = resolveIpfsUrl(r.result as string);
         try {
-          const res = await fetch(metadataUri);
+          const res = await fetch(metadataUri, { signal: AbortSignal.timeout(8000) });
           const json = await res.json();
           const imageRaw = json.image ?? "";
           const imageUrl = resolveIpfsUrl(imageRaw);

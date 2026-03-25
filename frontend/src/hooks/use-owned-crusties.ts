@@ -5,7 +5,7 @@ import { useAccount, usePublicClient } from 'wagmi';
 import { CRUSTIES_CONTRACT_ADDRESS, CRUSTIES_ABI } from '@/lib/contract';
 import type { OwnedCrustie, RarityTier } from '@/features/app/types';
 
-const IPFS_GATEWAY = 'https://gateway.pinata.cloud/ipfs/';
+const IPFS_GATEWAY = 'https://dweb.link/ipfs/';
 
 function ipfsToHttp(uri: string): string {
   if (uri.startsWith('ipfs://')) return IPFS_GATEWAY + uri.slice(7);
@@ -108,7 +108,7 @@ export function useOwnedCrusties(_fid?: number) {
 
             try {
               const metadataUrl = ipfsToHttp(uri);
-              const res = await fetch(metadataUrl);
+              const res = await fetch(metadataUrl, { signal: AbortSignal.timeout(8000) });
               if (res.ok) {
                 const metadata = await res.json();
                 imageUrl = metadata.image ? ipfsToHttp(metadata.image) : '';

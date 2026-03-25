@@ -5,7 +5,7 @@ import { usePublicClient } from 'wagmi';
 import { CRUSTIES_CONTRACT_ADDRESS, CRUSTIES_ABI } from '@/lib/contract';
 import type { GalleryEntry } from '@/features/app/types';
 
-const IPFS_GATEWAY = 'https://gateway.pinata.cloud/ipfs/';
+const IPFS_GATEWAY = 'https://dweb.link/ipfs/';
 const GALLERY_SIZE = 9;
 
 function ipfsToHttp(uri: string): string {
@@ -120,7 +120,7 @@ export function useGallery(limit = GALLERY_SIZE) {
 
             try {
               const metadataUrl = ipfsToHttp(uri);
-              const res = await fetch(metadataUrl);
+              const res = await fetch(metadataUrl, { signal: AbortSignal.timeout(8000) });
               if (res.ok) {
                 const metadata = await res.json();
                 imageUrl = metadata.image ? ipfsToHttp(metadata.image) : '';
