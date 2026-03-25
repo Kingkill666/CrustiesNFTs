@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { useAccount, useWriteContract, useWaitForTransactionReceipt, useSendCalls, useCallsStatus } from 'wagmi';
+import { useAccount, useWriteContract, useWaitForTransactionReceipt, useSendCalls, useCallsStatus, usePublicClient } from 'wagmi';
 import { encodeFunctionData } from 'viem';
 import { useFarcasterContext } from '@/hooks/useFarcasterContext';
 import { useCrusties } from '@/hooks/useCrusties';
@@ -43,6 +43,7 @@ export function MiniApp() {
   const { address } = useAccount();
   const { fid, username, pfpUrl } = useFarcasterContext();
   const { generate, minEthPrice, minTokenPrice, isFreeMintEligible } = useCrusties();
+  const publicClient = usePublicClient();
 
   // ── ETH mint: single contract write ───────────────────────────────────────
   const {
@@ -264,7 +265,33 @@ export function MiniApp() {
 
       const sigBytes = sig as `0x${string}`;
 
-      // Step 2: Fire the wallet prompt — user is still on the mint screen
+      // Step 2: Check balance before firing wallet prompt
+      if (method !== 'free' && publicClient && address) {
+        if (method === 'usdc') {
+          const usdcBalance = await publicClient.readContract({
+            address: USDC_TOKEN_ADDRESS,
+            abi: ERC20_ABI,
+            functionName: 'balanceOf',
+            args: [address],
+          });
+          const price = minTokenPrice ?? BigInt(3000000);
+          if ((usdcBalance as bigint) < price) {
+            const needed = Number(price) / 1e6;
+            const have = Number(usdcBalance as bigint) / 1e6;
+            setPipeline(p => ({ ...p, error: `Insufficient USDC balance. You need $${needed.toFixed(2)} but have $${have.toFixed(2)}.`, preparing: false }));
+            return;
+          }
+        } else if (method === 'eth') {
+          const ethBalance = await publicClient.getBalance({ address });
+          const price = minEthPrice ?? BigInt(1000000000000000);
+          if (ethBalance < price) {
+            setPipeline(p => ({ ...p, error: `Insufficient ETH balance. You need at least 0.001 ETH to mint.`, preparing: false }));
+            return;
+          }
+        }
+      }
+
+      // Step 3: Fire the wallet prompt — user is still on the mint screen
       // The useEffect above will transition to 'minting' when isPending flips true
       if (method === 'free') {
         console.log('[MiniApp] Calling writeMint (freeMint)', {
